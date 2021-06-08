@@ -15,3 +15,5 @@
 ::: botcity.maestro.model.AutomationTask
 
 ::: botcity.maestro.model.Column
+
+::: botcity.maestro.model.BotExecution

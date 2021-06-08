@@ -216,7 +216,7 @@ class BotMaestroSDK:
     @ensure_access_token
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
-        Finishes a given task.
+        Return details about a given task.
 
         Args:
             task_id: The task unique identifier.
