@@ -188,3 +188,20 @@ class Column:
     name: str
     label: str
     width: int
+
+
+@dataclass
+class BotExecution:
+    """
+    Bot execution parameters.
+
+    Attributes:
+        server: The BotMaestro server hostname or IP.
+        task_id: The task unique identifier.
+        token: The access token to be used when communicating with the BotMaestro server.
+        parameters: Dictionary with parameters and values for this task.
+    """
+    server: str
+    task_id: str
+    token: str
+    parameters: Dict[str, object]

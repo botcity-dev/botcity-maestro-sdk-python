@@ -214,6 +214,32 @@ class BotMaestroSDK:
                 raise ValueError(message)
 
     @ensure_access_token
+    def get_task(self, task_id: str) -> model.AutomationTask:
+        """
+        Finishes a given task.
+
+        Args:
+            task_id: The task unique identifier.
+
+        Returns:
+            Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
+        """
+        url = f'{self._server}/app/api/task/get'
+
+        data = {"id": task_id, "access_token": self.access_token}
+        with requests.get(url, params=data) as req:
+            if req.status_code == 200:
+                payload = req.text
+                return model.AutomationTask.from_json(payload)
+            else:
+                try:
+                    message = 'Error during task get. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during task get. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    @ensure_access_token
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
         Create a new log on the BotMaestro portal.
