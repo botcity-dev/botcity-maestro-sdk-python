@@ -1,6 +1,5 @@
 <p align="center">
   <h1 align="center">BotCity Maestro SDK - Python</h1>
-
   <p align="center">
     <strong>« Explore Framework <a href="https://botcity-dev.github.io/botcity-maestro-sdk-python/">docs</a> »</strong>
     <br>
