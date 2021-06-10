@@ -407,7 +407,7 @@ class BotMaestroSDK:
             )
         }
 
-        with requests.post(url, params=data, files=files) as req:
+        with requests.post(url, data=data, files=files) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
