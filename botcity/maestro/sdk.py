@@ -214,6 +214,31 @@ class BotMaestroSDK:
                 raise ValueError(message)
 
     @ensure_access_token
+    def restart_task(self, task_id: str) -> model.ServerMessage:
+        """
+        Restarts a given task.
+
+        Args:
+            task_id: The task unique identifier.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        url = f'{self._server}/app/api/task/restart'
+
+        data = {"id": task_id, "access_token": self.access_token}
+        with requests.post(url, data=data) as req:
+            if req.status_code == 200:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                try:
+                    message = 'Error during task restart. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during task restart. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    @ensure_access_token
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
         Return details about a given task.
@@ -313,7 +338,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/log/read'
 
         data = {"activityLabel": activity_label, "date": date, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.get(url, params=data) as req:
             if req.status_code == 200:
                 # TODO: Improve the way data is returned.
                 return [entry.get('columns') for entry in json.loads(req.json()['message'])]
@@ -323,6 +348,35 @@ class BotMaestroSDK:
                         req.status_code, req.json().get('message', ''))
                 except ValueError:
                     message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    @ensure_access_token
+    def delete_log(self, activity_label: str) -> model.ServerMessage:
+        """
+        Fetch log information.
+
+        Args:
+            activity_label: The activity unique identifier.
+            date: Initial date for log information in the format DD/MM/YYYY. If empty all information is retrieved.
+
+        Returns:
+            Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
+            the column value.
+        """
+        # date  a partir desta data
+        # date em branco eh tudo
+        url = f'{self._server}/app/api/log/read'
+
+        data = {"activityLabel": activity_label, "access_token": self.access_token}
+        with requests.post(url, data=data) as req:
+            if req.status_code == 200:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                try:
+                    message = 'Error during log delete. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
     @ensure_access_token
