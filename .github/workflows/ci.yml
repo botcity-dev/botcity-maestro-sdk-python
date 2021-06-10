@@ -30,8 +30,6 @@ jobs:
         run: |
           pip install .
 
-      - run: sudo apt-get install xvfb
-
       - name: Run Tests
         run: |
-          xvfb-run --auto-servernum python run_tests.py
+          python run_tests.py
