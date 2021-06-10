@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Linter Dependencies
         run: |
-          pip install flake8 mypy
+          pip install flake8 mypy types-requests
 
       - name: Run Flake8 Linter
         run: |
