@@ -14,7 +14,7 @@
     
     
       
-        <title>API - BotCity Maestro SDK - Python</title>
+        <title>Tutorial - BotCity Maestro SDK - Python</title>
       
     
     
@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api" class="md-skip">
+        <a href="#tutorial" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +96,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API
+              Tutorial
             
           </span>
         </div>
@@ -255,11 +255,21 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../tutorial/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Tutorial
       </a>
+      
     </li>
   
 
@@ -270,14 +280,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       <label class="md-nav__link" for="__nav_4">
         API
@@ -293,21 +301,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
         API
       </a>
-      
     </li>
   
 
@@ -317,7 +315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="sdk/" class="md-nav__link">
+      <a href="../api/sdk/" class="md-nav__link">
         BotMaestro
       </a>
     </li>
@@ -329,7 +327,7 @@
   
   
     <li class="md-nav__item">
-      <a href="model/" class="md-nav__link">
+      <a href="../api/model/" class="md-nav__link">
         Model
       </a>
     </li>
@@ -371,26 +369,18 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/botcity-dev/botcity-maestro-sdk-python/edit/master/docs/api/index.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/botcity-dev/botcity-maestro-sdk-python/edit/master/docs/tutorial.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="api">API</h1>
-<p>The API is divided into the following modules:</p>
-<ul>
-<li>
-<p><em>sdk</em>: this module contains the BotMaestroSDK class </p>
-</li>
-<li>
-<p><em>model</em>: this module contains data model classes to make parameters and outputs more manageable.</p>
-</li>
-</ul>
-<p>In order to make it easy for users, all modules are available
-via the core module.</p>
-<pre><code class="language-python">from botcity.maestro import *
-</code></pre>
-<p>The following sections will describe each module in depth.</p>
+                <h1 id="tutorial">Tutorial</h1>
+<p><a href="https://mybinder.org/v2/gh/botcity-dev/botcity-maestro-sdk-python/HEAD?filepath=examples%2Fmaestro-sdk-demo.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>This live tutorial uses <a href="https://mybinder.org/">Binder</a> to provide you with an complete and interactive environment
+without installing a single package.</p>
+<p>It can take a couple minutes to load the tutorial but once it is loaded it is ready to go! </p>
+<p>Take advantage of our live self-paced tutorial on how to use and explore the Maestro SDK by
+clicking on <a href="https://mybinder.org/v2/gh/botcity-dev/botcity-maestro-sdk-python/HEAD?filepath=examples%2Fmaestro-sdk-demo.ipynb">this link</a>.</p>
                 
               
               
@@ -415,7 +405,7 @@ via the core module.</p>
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../tutorial/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial" rel="prev">
+        <a href="../orchestration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Orchestration" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -424,20 +414,20 @@ via the core module.</p>
               <span class="md-footer__direction">
                 Previous
               </span>
-              Tutorial
+              Orchestration
             </div>
           </div>
         </a>
       
       
         
-        <a href="sdk/" class="md-footer__link md-footer__link--next" aria-label="Next: BotMaestro" rel="next">
+        <a href="../api/" class="md-footer__link md-footer__link--next" aria-label="Next: API" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              BotMaestro
+              API
             </div>
           </div>
           <div class="md-footer__button md-icon">
