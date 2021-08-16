@@ -48,10 +48,33 @@ class BotMaestroSDK:
         Attributes:
             access_token (str): The access token obtained via login.
         """
-        self._server = server
+        self._server = None
         self._login = login
         self._key = key
-        self.access_token = None
+        self._access_token = None
+
+        self.server = server
+
+    @property
+    def server(self):
+        """The server address"""
+        return self._server
+
+    @server.setter
+    def server(self, server):
+        # Remove additional end /
+        if server and server[-1] == "/":
+            server = server[:-1]
+        self._server = server
+
+    @property
+    def access_token(self):
+        """The access token"""
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, token):
+        self._access_token = token
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -365,7 +388,7 @@ class BotMaestroSDK:
         """
         # date  a partir desta data
         # date em branco eh tudo
-        url = f'{self._server}/app/api/log/read'
+        url = f'{self._server}/app/api/log/delete'
 
         data = {"activityLabel": activity_label, "access_token": self.access_token}
         with requests.post(url, data=data) as req:
@@ -436,6 +459,7 @@ class BotMaestroSDK:
         with requests.get(url, params=data) as req:
             if req.status_code == 200:
                 h_content = req.headers['Content-Disposition']
+
                 filename = h_content[h_content.rfind('=') + 2:-1]
                 filename = filename[:filename.rfind('_')] + filename[filename.rfind('.'):]
                 return filename, req.content

@@ -53,9 +53,11 @@ class AutomationTaskFinishStatus(str, enum.Enum):
     Attributes:
         SUCCESS (str): The task finished successfully.
         FAILED (str): The task failed to finish.
+        PARTIALLY_COMPLETED (str): The task completed part of the expected steps.
     """
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
+    PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
 
 
 class ServerMessageType(str, enum.Enum):
