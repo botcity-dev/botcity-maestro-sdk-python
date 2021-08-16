@@ -88,7 +88,8 @@ class BotMaestroSDK:
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
-        self._server = server or self._server
+        if server:
+            self.server = server
         self._login = login or self._login
         self._key = key or self._key
         if not self._server:
