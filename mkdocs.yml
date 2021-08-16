@@ -1,11 +1,12 @@
 site_name: BotCity Maestro SDK - Python
 repo_url: https://github.com/botcity-dev/botcity-maestro-sdk-python
-repo_name: ""
+repo_name: "botcity-dev/botcity-maestro-sdk-python"
 copyright: BotCity &copy; - All rights reserved
 
 nav:
     - Home: index.md
     - Orchestration: orchestration.md
+    - Tutorial: tutorial.md
     - API:
         - api/index.md
         - 'BotMaestro': api/sdk.md
@@ -47,19 +48,19 @@ markdown_extensions:
   - attr_list
 
 plugins:
-    - search
-    - mkdocstrings:
-        default_handler: python
-        watch:
-          - botcity/maestro
-        handlers:
-          python:
-            selection:
-              inherited_members: false
-              filters:
-                - "!^_"  # exclude all members starting with _
-                - "^__init__$"  # but always include __init__ modules and methods
-                - "!([a-z])*([A-Z])" # exclude camelCase elements
-            rendering:
-              show_source: false
-              show_root_heading: true
+  - search
+  - mkdocstrings:
+      default_handler: python
+      watch:
+        - botcity/maestro
+      handlers:
+        python:
+          selection:
+            inherited_members: false
+            filters:
+              - "!^_"  # exclude all members starting with _
+              - "^__init__$"  # but always include __init__ modules and methods
+              - "!([a-z])*([A-Z])" # exclude camelCase elements
+          rendering:
+            show_source: false
+            show_root_heading: true
