@@ -144,7 +144,7 @@ class BotMaestroSDK:
 
     @ensure_access_token
     def message(self, email: List[str], users: List[str], subject: str, body: str,
-                msg_type: model.MessageType, group: str) -> model.ServerMessage:
+                msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
         """
         Send an email message to the list of email and users given.
 
@@ -160,6 +160,9 @@ class BotMaestroSDK:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
         url = f'{self._server}/app/api/message/send'
+
+        if not group:
+            group = ""
 
         email_str = ",".join(email)
         users_str = ",".join(users)
