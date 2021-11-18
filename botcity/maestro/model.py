@@ -1,7 +1,7 @@
 import enum
 import json
-from typing import Dict
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Optional
 
 
 class AlertType(str, enum.Enum):
@@ -175,6 +175,87 @@ class AutomationTask:
                               agent_id=agent_id, user_creation_id=user_creation_id,
                               org_creation_id=org_creation_id, date_creation=date_creation,
                               date_last_modified=date_last_modified, test=test)
+
+
+@dataclass
+class Artifact:
+    """
+    Artifact.
+
+    Attributes:
+        id: The task unique identifier.
+        type: The type of artifact.
+        task_id: The task unique identifier.
+        name: Display name for artifact.
+        filename: File name as provided during upload.
+        storage_filename: Internal file name.
+        storage_filepath: Internal absolute path to file.
+        organization: The organization unique identifier.
+        user: The user unique identifier.
+        date_creation: Datetime information of when this artifact was created.
+    """
+    id: int
+    type: str
+    task_id: int
+    name: str
+    filename: str
+    storage_filename: str
+    storage_filepath: str
+    organization: int
+    user: Optional[int]
+    date_creation: str
+
+    def to_json(self) -> str:
+        """
+
+        Returns:
+            JSON string representation of this object.
+        """
+        return json.dumps(asdict(self))
+
+    @staticmethod
+    def from_json(payload: str) -> 'Artifact':
+        """
+        Instantiate a `Artifact` object from a JSON payload
+        obtained from the BotMaestro portal.
+
+        Args:
+            payload: A JSON string containing the required metadata.
+
+        Returns:
+            Artifact instance.
+        """
+        data = json.loads(payload)
+        return Artifact.from_dict(data)
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> 'Artifact':
+        """
+        Instantiate a `Artifact` object from a dict payload obtained
+        from the BotMaestro portal.
+
+        Args:
+            data: A dictionary containing the required metadata.
+
+        Returns:
+            Artifact instance.
+        """
+        uid = data.get("id", None)
+        tp = data.get("type", None)
+        task_id = data.get("taskId", None)
+        name = data.get("name", None)
+        filename = data.get("fileName", None)
+        storage_filename = data.get("storageFileName", None)
+        storage_filepath = data.get("storageFilePath", None)
+        organization = data.get("organizationId", None)
+        user = data.get("user", None)
+        date_creation = data.get("dateCreation", None)
+
+        return Artifact(
+            id=uid, type=tp, task_id=task_id, name=name, filename=filename,
+            storage_filename=storage_filename, storage_filepath=storage_filepath,
+            organization=organization, user=user, date_creation=date_creation
+        )
 
 
 @dataclass
