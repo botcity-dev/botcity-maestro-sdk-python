@@ -468,6 +468,40 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact" class="md-nav__link">
+    Artifact
+  </a>
+  
+    <nav class="md-nav" aria-label="Artifact">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.from_dict" class="md-nav__link">
+    from_dict()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.from_json" class="md-nav__link">
+    from_json()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.to_json" class="md-nav__link">
+    to_json()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#botcity.maestro.model.Column" class="md-nav__link">
     Column
   </a>
@@ -602,6 +636,40 @@
         
           <li class="md-nav__item">
   <a href="#botcity.maestro.model.AutomationTask.to_json" class="md-nav__link">
+    to_json()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact" class="md-nav__link">
+    Artifact
+  </a>
+  
+    <nav class="md-nav" aria-label="Artifact">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.from_dict" class="md-nav__link">
+    from_dict()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.from_json" class="md-nav__link">
+    from_json()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#botcity.maestro.model.Artifact.to_json" class="md-nav__link">
     to_json()
   </a>
   
@@ -1234,6 +1302,271 @@ obtained from the BotMaestro portal.</p>
 
 
 <h3 class="doc doc-heading" id="botcity.maestro.model.AutomationTask.to_json">
+<code class="highlight language-python"><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>JSON string representation of this object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="botcity.maestro.model.Artifact">
+        <code>
+botcity.maestro.model.Artifact        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>Artifact.</p>
+
+<p><strong>Attributes:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>id</code></td>
+        <td><code>int</code></td>
+        <td><p>The task unique identifier.</p></td>
+      </tr>
+      <tr>
+        <td><code>type</code></td>
+        <td><code>str</code></td>
+        <td><p>The type of artifact.</p></td>
+      </tr>
+      <tr>
+        <td><code>task_id</code></td>
+        <td><code>int</code></td>
+        <td><p>The task unique identifier.</p></td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>Display name for artifact.</p></td>
+      </tr>
+      <tr>
+        <td><code>filename</code></td>
+        <td><code>str</code></td>
+        <td><p>File name as provided during upload.</p></td>
+      </tr>
+      <tr>
+        <td><code>storage_filename</code></td>
+        <td><code>str</code></td>
+        <td><p>Internal file name.</p></td>
+      </tr>
+      <tr>
+        <td><code>storage_filepath</code></td>
+        <td><code>str</code></td>
+        <td><p>Internal absolute path to file.</p></td>
+      </tr>
+      <tr>
+        <td><code>organization</code></td>
+        <td><code>int</code></td>
+        <td><p>The organization unique identifier.</p></td>
+      </tr>
+      <tr>
+        <td><code>user</code></td>
+        <td><code>Optional[int]</code></td>
+        <td><p>The user unique identifier.</p></td>
+      </tr>
+      <tr>
+        <td><code>date_creation</code></td>
+        <td><code>str</code></td>
+        <td><p>Datetime information of when this artifact was created.</p></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 class="doc doc-heading" id="botcity.maestro.model.Artifact.from_dict">
+<code class="highlight language-python"><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Instantiate a <code>Artifact</code> object from a dict payload obtained
+from the BotMaestro portal.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>data</code></td>
+        <td><code>Dict[str, Any]</code></td>
+        <td><p>A dictionary containing the required metadata.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Artifact</code></td>
+      <td><p>Artifact instance.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 class="doc doc-heading" id="botcity.maestro.model.Artifact.from_json">
+<code class="highlight language-python"><span class="n">from_json</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Instantiate a <code>Artifact</code> object from a JSON payload
+obtained from the BotMaestro portal.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>payload</code></td>
+        <td><code>str</code></td>
+        <td><p>A JSON string containing the required metadata.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Artifact</code></td>
+      <td><p>Artifact instance.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 class="doc doc-heading" id="botcity.maestro.model.Artifact.to_json">
 <code class="highlight language-python"><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
 
