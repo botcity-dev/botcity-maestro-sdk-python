@@ -446,6 +446,36 @@ class BotMaestroSDK:
                 raise ValueError(message)
 
     @ensure_access_token
+    def list_artifacts(self) -> List[model.Artifact]:
+        """
+        List all artifacts available for the organization.
+
+        Returns:
+            List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
+        """
+        url = f'{self._server}/app/api/artifact/list'
+
+        data = {
+            "access_token": self.access_token
+        }
+
+        with requests.get(url, params=data) as req:
+            if req.status_code == 200:
+                data = json.loads(req.text)
+                message = data.get("message", "")
+                if not message:
+                    return []
+
+                return [model.Artifact.from_dict(a) for a in json.loads(message)]
+            else:
+                try:
+                    message = 'Error during artifact listing. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during artifact listing. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    @ensure_access_token
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
         Retrieve an artifact from the BotMaestro portal.
