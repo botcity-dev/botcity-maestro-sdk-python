@@ -194,8 +194,11 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/app/api/task/create'
 
-        data = {"activityLabel": activity_label, "jsonParams": json.dumps(parameters),
-                "taskForTest": str(test).lower(), "access_token": self.access_token}
+        data = {
+            "activityLabel": activity_label, "taskForTest": str(test).lower(), "access_token": self.access_token
+        }
+        data.update(parameters)
+
         with requests.post(url, data=data) as req:
             if req.status_code == 200:
                 payload = req.json().get('payload')
