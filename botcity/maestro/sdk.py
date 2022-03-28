@@ -387,7 +387,6 @@ class BotMaestroSDK:
 
         Args:
             activity_label: The activity unique identifier.
-            date: Initial date for log information in the format DD/MM/YYYY. If empty all information is retrieved.
 
         Returns:
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are

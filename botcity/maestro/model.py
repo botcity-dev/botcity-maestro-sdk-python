@@ -79,7 +79,7 @@ class ServerMessage:
 
     Attributes:
         message: The response message sent by the BotMaestro portal.
-        type: The message type. See [ServerMessageType][botcity.maestro.ServerMessageType]
+        type: The message type. See [ServerMessageType][botcity.maestro.model.ServerMessageType]
         payload:
     """
     message: str
@@ -121,23 +121,32 @@ class AutomationTask:
         id: The task unique identifier.
         state: The task state. See [AutomationTaskState][botcity.maestro.model.AutomationTaskState].
         parameters: Dictionary with parameters and values for this task.
+        input_file: The input file for this task.
         activity_id: Identifier of the activity.
         agent_id:  Identifier of the agent which created the task.
         user_creation_id: Identifier of the user which created the task.
+        user_creation_name: Name of the user which created the task.
         org_creation_id: Identifier of the organization which created the task.
         date_creation: Datetime information of when this task was created.
         date_last_modified: Datetime information of when this task was last modified.
+        finish_status: The finish status of this task. See
+            [AutomationTaskFinishStatus][botcity.maestro.model.AutomationTaskFinishStatus].
+        finish_message: The finish message of this task.
         test: Whether or not this task was a test.
     """
     id: int
     state: AutomationTaskState
     parameters: Dict[str, object]
+    input_file: 'Artifact'
     activity_id: int
     agent_id: int
     user_creation_id: int
+    user_creation_name: str
     org_creation_id: int
     date_creation: str
     date_last_modified: str
+    finish_status: AutomationTaskFinishStatus
+    finish_message: str
     test: bool
 
     def to_json(self) -> str:
@@ -165,16 +174,23 @@ class AutomationTask:
         state = data.get("state")
         parameters = data.get("parameters")
         activity_id = data.get("activityId")
+        input_file = data.get("inputFile")
+        if input_file:
+            input_file = Artifact.from_dict(input_file)
         agent_id = data.get("agentId")
         user_creation_id = data.get("userCreationId")
+        user_creation_name = data.get("userCreationName")
         org_creation_id = data.get("organizationCreationId")
         date_creation = data.get("dateCreation")
         date_last_modified = data.get("dateLastModified")
+        finish_status = data.get("finishStatus")
+        finish_message = data.get("finishMessage")
         test = data.get("test")
         return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id,
-                              agent_id=agent_id, user_creation_id=user_creation_id,
-                              org_creation_id=org_creation_id, date_creation=date_creation,
-                              date_last_modified=date_last_modified, test=test)
+                              input_file=input_file, agent_id=agent_id, user_creation_id=user_creation_id,
+                              user_creation_name=user_creation_name, org_creation_id=org_creation_id,
+                              date_creation=date_creation, date_last_modified=date_last_modified,
+                              finish_status=finish_status, finish_message=finish_message, test=test)
 
 
 @dataclass
