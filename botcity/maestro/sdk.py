@@ -25,7 +25,25 @@ def ensure_access_token(func: F) -> F:
     def wrapper(obj, *args, **kwargs):
         if isinstance(obj, BotMaestroSDK):
             if obj.access_token is None:
-                raise RuntimeError('Access Token not available. Make sure to invoke login first.')
+                if obj.RAISE_NOT_CONNECTED:
+                    raise RuntimeError('Access Token not available. Make sure to invoke login first.')
+                else:
+                    if not obj._notified_disconnect:
+                        obj._notified_disconnect = True
+                        print("** WARNING BotCity Maestro is not logged in and RAISE_NOT_CONNECTED is False. Running on Offline mode. **")
+                    message = f"Invoked '{func.__name__}"
+                    params = []
+                    if args:
+                        params.extend(args)
+                    if kwargs:
+                        for k, v in kwargs.items():
+                            params.append(f"{k}={v}")
+                    if params:
+                        message += ' with arguments '
+                        message += ", ".join(params)
+                    message += "."
+                    print(message)
+                    return
         else:
             raise NotImplementedError('ensure_token is only valid for BotMaestroSDK methods.')
         return func(obj, *args, **kwargs)
@@ -34,6 +52,10 @@ def ensure_access_token(func: F) -> F:
 
 
 class BotMaestroSDK:
+
+    _notified_disconnect = False
+    RAISE_NOT_CONNECTED = True
+
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
         Main class to interact with the BotMaestro web portal.
