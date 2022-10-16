@@ -1,16 +1,63 @@
-from typing import Dict, List, Optional, Tuple
+import sys
+import warnings
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 
-import requests
-import urllib3
+from .. import model
 
-from . import model
-from .impl import (BotMaestroSDKInterface, BotMaestroSDKV1, BotMaestroSDKV2,
-                   ensure_access_token)
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+F = TypeVar('F', bound=Callable[..., Any])
 
 
-class BotMaestroSDK(BotMaestroSDKInterface):
+def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
+    """
+    Decorator to ensure that a token is available.
+
+    Args:
+        func (callable): The function to be wrapped
+        invoke (bool): Whether or not to invoke the function anyway.
+    Returns:
+        wrapper (callable): The decorated function
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if isinstance(obj, BotMaestroSDK):
+                if obj.access_token is None:
+                    if obj.RAISE_NOT_CONNECTED:
+                        raise RuntimeError('Access Token not available. Make sure to invoke login first.')
+                    else:
+                        message = ""
+                        if not obj._notified_disconnect:
+                            obj._notified_disconnect = True
+                            message += "** WARNING BotCity Maestro is not logged in and RAISE_NOT_CONNECTED is "
+                            message += "False. Running on Offline mode. **"
+                            warnings.warn(message, stacklevel=2)
+                        message = f"Invoked '{func.__name__}'"
+                        params: List[str] = []
+                        if args:
+                            params.extend(args)
+                        if kwargs:
+                            for k, v in kwargs.items():
+                                params.append(f"{k}={v}")
+                        if params:
+                            message += ' with arguments '
+                            message += ", ".join(params)
+                        message += "."
+                        warnings.warn(message, stacklevel=2)
+                        if not invoke:
+                            return lambda *args, **kwargs: None
+            else:
+                raise NotImplementedError('ensure_token is only valid for BotMaestroSDK methods.')
+            return func(obj, *args, **kwargs)
+
+        return cast(F, wrapper)
+    return decorator
+
+
+class BotMaestroSDKInterface:
+
+    _notified_disconnect = False
+    RAISE_NOT_CONNECTED = True
 
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -26,8 +73,64 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Attributes:
             access_token (str): The access token obtained via login.
         """
-        super().__init__(server=server, login=locals, key=key)
-        self._impl = None
+        self._server = None
+        self._login = login
+        self._key = key
+        self._access_token = None
+        self._task_id = None
+
+        self.server = server
+
+    @classmethod
+    def from_sys_args(cls, default_server="", default_login="", default_key=""):
+        if len(sys.argv) >= 4:
+            maestro = cls()
+            try:
+                server, task_id, token, organization, *_ = sys.argv[1:]
+            except ValueError:
+                server, task_id, token, *_ = sys.argv[1:]
+            maestro.server = server
+            maestro.access_token = token
+            maestro.task_id = task_id
+        else:
+            maestro = cls(
+                server=default_server,
+                login=default_login,
+                key=default_key
+            )
+            if default_server:
+                maestro.login()
+        return maestro
+
+    @property
+    def server(self):
+        """The server address"""
+        return self._server
+
+    @server.setter
+    def server(self, server):
+        # Remove additional end /
+        if server and server[-1] == "/":
+            server = server[:-1]
+        self._server = server
+
+    @property
+    def access_token(self):
+        """The access token"""
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, token):
+        self._access_token = token
+
+    @property
+    def task_id(self):
+        """The Current Task ID"""
+        return self._task_id
+
+    @task_id.setter
+    def task_id(self, task_id):
+        self._task_id = task_id
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -41,32 +144,13 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
+        raise NotImplementedError
 
-        if server:
-            self.server = server
-        self._login = login or self._login
-        self._key = key or self._key
-        if not self._server:
-            raise ValueError('Server is required.')
-        if not self._login:
-            raise ValueError('Login is required.')
-        if not self._key:
-            raise ValueError('Key is required.')
-        self.logoff()
-
-        url = f'{self._server}/api/v2/maestro/version'
-
-        with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
-            try:
-                print('req: ', req)
-                if req.status_code == 200:
-                    version = req.json()['version']
-                    print('version: ', version)
-                    self._impl = BotMaestroSDKV2(self.server, self.login, self._key)
-            finally:
-                if self._impl is None:
-                    self._impl = BotMaestroSDKV1(self.server, self.login, self._key)
-        self._impl.login()
+    def logoff(self):
+        """
+        Revoke the access token used to communicate with the BotMaestro portal.
+        """
+        self.access_token = None
 
     @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
@@ -82,7 +166,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.alert(task_id=task_id, title=title, message=message, alert_type=alert_type)
+        raise NotImplementedError
 
     @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
@@ -101,7 +185,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.message(email=email, users=users, subject=subject, body=body, msg_type=msg_type, group=group)
+        raise NotImplementedError
 
     @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
@@ -117,7 +201,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        return self._impl.message(activity_label=activity_label, parameters=parameters, test=test)
+        raise NotImplementedError
 
     @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
@@ -134,7 +218,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.finish_task(task_id=task_id, status=status, message=message)
+        raise NotImplementedError
 
     @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
@@ -147,7 +231,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.restart_task(task_id=task_id)
+        raise NotImplementedError
 
     @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
@@ -160,7 +244,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        return self._impl.get_task(task_id=task_id)
+        raise NotImplementedError
 
     @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
@@ -174,7 +258,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.new_log(activity_label=activity_label, columns=columns)
+        raise NotImplementedError
 
     @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
@@ -188,7 +272,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.new_log_entry(activity_label=activity_label, values=values)
+        raise NotImplementedError
 
     @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
@@ -203,7 +287,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        return self._impl.get_log(activity_label=activity_label, date=date)
+        raise NotImplementedError
 
     @ensure_access_token()
     def delete_log(self, activity_label: str) -> model.ServerMessage:
@@ -217,7 +301,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        return self._impl.delete_log(activity_label=activity_label)
+        raise NotImplementedError
 
     @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
@@ -232,7 +316,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.post_artifact(task_id=task_id, artifact_name=artifact_name, filepath=filepath)
+        raise NotImplementedError
 
     @ensure_access_token()
     def list_artifacts(self) -> List[model.Artifact]:
@@ -242,7 +326,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
         """
-        return self._impl.list_artifacts()
+        raise NotImplementedError
 
     @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
@@ -255,4 +339,30 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        return self.get_artifact(artifact_id=artifact_id)
+        raise NotImplementedError
+
+    @ensure_access_token(invoke=True)
+    def get_execution(self, task_id: Optional[str] = None) -> model.BotExecution:
+        """
+        Fetch the BotExecution object for a given task.
+
+        Args:
+            task_id (Optional[str], optional): The task ID. Defaults to None.
+
+        Returns:
+            model.BotExecution: The BotExecution information.
+        """
+        if not self.access_token and not self.RAISE_NOT_CONNECTED:
+            return model.BotExecution("", "", "", {})
+
+        task_id = task_id or self.task_id
+        if not task_id:
+            # If we are connected (access_token) or want to raise errors when disconnected
+            # we show the error, otherwise we are working offline and just want to ignore this
+            # but we will print a warning message for good measure
+            raise ValueError("A task ID must be informed either via the parameter or the class property.")
+
+        parameters = self.get_task(task_id).parameters
+
+        execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
+        return execution
