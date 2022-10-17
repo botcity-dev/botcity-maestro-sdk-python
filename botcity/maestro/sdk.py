@@ -62,11 +62,12 @@ class BotMaestroSDK(BotMaestroSDKInterface):
                 if req.status_code == 200:
                     version = req.json()['version']
                     print('version: ', version)
-                    self._impl = BotMaestroSDKV2(self.server, self.login, self._key)
+                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
             finally:
                 if self._impl is None:
-                    self._impl = BotMaestroSDKV1(self.server, self.login, self._key)
+                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key)
         self._impl.login()
+        self.access_token = self._impl.access_token
 
     @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
@@ -117,7 +118,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        return self._impl.message(activity_label=activity_label, parameters=parameters, test=test)
+        return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test)
 
     @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,

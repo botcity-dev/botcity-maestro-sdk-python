@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 
 import requests
 
-from .interface import BotMaestroSDKInterface, ensure_access_token
 from .. import model
+from .interface import BotMaestroSDKInterface, ensure_access_token
 
 
 class BotMaestroSDKV2(BotMaestroSDKInterface):
@@ -28,9 +28,9 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         super().__init__(server=server, login=login, key=key)
         print('CTOR V2')
 
-    def _header(self)->Dict:
+    def _headers(self) -> Dict:
         """The HTTP header for BotCity Maestro communication"""
-        return {"token": self.access_token, "organization": self.login}
+        return {'Content-Type': 'application/json', "token": self.access_token, "organization": self._login}
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -47,12 +47,15 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         print('Login V2')
         url = f'{self._server}/api/v2/workspace/login'
         data = {"login": self._login, "key": self._key}
+        headers = {'Content-Type': 'application/json'}
 
-        with requests.post(url, data=data) as req:
+        print("data: ", data)
+        print("json", json.dumps(data))
+        with requests.post(url, data=json.dumps(data), headers=headers) as req:
             print(req.status_code)
             print(req.text)
             if req.status_code == 200:
-                self.access_token = req.json()['data']['accessToken']
+                self.access_token = req.json()['accessToken']
             else:
                 raise ValueError('Error during login. Server returned %d. %s' % (req.status_code, req.text))
 
@@ -70,7 +73,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/alert/send'
+        url = f'{self._server}/api/v2/alerts'
 
         data = {"taskId": task_id, "title": title,
                 "message": message, "type": alert_type,
@@ -119,7 +122,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     (req.status_code, req.json().get('message', ''))
                 )
 
-    @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
         """
@@ -133,14 +135,15 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/create'
-
+        url = f'{self._server}/api/v2/task'
         data = {
-            "activityLabel": activity_label, "taskForTest": str(test).lower(), "access_token": self.access_token
+            "activityLabel": activity_label, "test": test, "parameters": parameters
         }
-        data.update(parameters)
-
-        with requests.post(url, data=data) as req:
+        headers = self._headers()
+        with requests.post(url, json=data, headers=headers) as req:
+            print(req.status_code)
+            print(req.text)
+            print(req.json())
             if req.status_code == 200:
                 payload = req.json().get('payload')
                 return model.AutomationTask.from_json(payload)
@@ -152,7 +155,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during task create. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
                     message: str = "") -> model.ServerMessage:
         """
@@ -167,13 +169,11 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/finish'
-
-        processed_items = "1"  # TODO: Check this constant value here.
-
-        data = {"taskId": task_id, "finishStatus": status, "finishMessage": message,
-                "processedItems": processed_items, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        url = f'{self._server}/api/v2/task/{task_id}'
+        data = {"finishStatus": status, "finishMessage": message,
+                "state": "FINISHED"}
+        headers = self._headers()
+        with requests.post(url, json=data, headers=headers) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:

@@ -21,7 +21,8 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            if isinstance(obj, BotMaestroSDK):
+            print('Ensure Token: ', obj)
+            if isinstance(obj, BotMaestroSDKInterface):
                 if obj.access_token is None:
                     if obj.RAISE_NOT_CONNECTED:
                         raise RuntimeError('Access Token not available. Make sure to invoke login first.')
@@ -78,6 +79,7 @@ class BotMaestroSDKInterface:
         self._key = key
         self._access_token = None
         self._task_id = None
+        self._impl = None
 
         self.server = server
 
@@ -151,8 +153,8 @@ class BotMaestroSDKInterface:
         Revoke the access token used to communicate with the BotMaestro portal.
         """
         self.access_token = None
+        self._impl = None
 
-    @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
         """
         Register an alert message on the BotMaestro portal.
@@ -168,7 +170,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
                 msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
         """
@@ -187,7 +188,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
         """
@@ -203,7 +203,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
                     message: str = "") -> model.ServerMessage:
         """
@@ -220,7 +219,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
         """
         Restarts a given task.
@@ -233,7 +231,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
         Return details about a given task.
@@ -246,7 +243,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
         Create a new log on the BotMaestro portal.
@@ -260,7 +256,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
         """
         Creates a new log entry.
@@ -274,7 +269,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
         Fetch log information.
@@ -289,7 +283,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def delete_log(self, activity_label: str) -> model.ServerMessage:
         """
         Fetch log information.
@@ -303,7 +296,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
         Upload a new artifact into the BotMaestro portal.
@@ -318,7 +310,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def list_artifacts(self) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
@@ -328,7 +319,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
         Retrieve an artifact from the BotMaestro portal.
