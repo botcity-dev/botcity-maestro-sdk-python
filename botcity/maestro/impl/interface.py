@@ -296,6 +296,19 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
+    @ensure_access_token()
+    def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
+        """
+        Retrieve an artifact from the BotMaestro portal.
+
+        Args:
+            artifact_id: The artifact unique identifier.
+
+        Returns:
+            Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
+        """
+        raise NotImplementedError
+
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
         Upload a new artifact into the BotMaestro portal.
@@ -310,7 +323,7 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    def list_artifacts(self) -> List[model.Artifact]:
+    def list_artifacts(self, days: int = 7) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
 
@@ -356,3 +369,17 @@ class BotMaestroSDKInterface:
 
         execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
         return execution
+
+    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
+        """
+        Creates a new artifact
+
+        Args:
+            task_id: The task unique identifier.
+            name: The name of the artifact to be displayed on the portal.
+            filename: The file to be uploaded.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        raise NotImplementedError

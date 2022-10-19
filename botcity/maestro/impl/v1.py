@@ -467,3 +467,17 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
 
         execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
         return execution
+
+    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
+        """
+        Creates a new artifact
+
+        Args:
+            task_id: The task unique identifier.
+            name: The name of the artifact to be displayed on the portal.
+            filename: The file to be uploaded.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        raise NotImplementedError

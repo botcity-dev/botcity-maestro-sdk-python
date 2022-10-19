@@ -256,4 +256,18 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        return self.get_artifact(artifact_id=artifact_id)
+        return self._impl.get_artifact(artifact_id=artifact_id)
+
+    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
+        """
+        Creates a new artifact
+
+        Args:
+            task_id: The task unique identifier.
+            name: The name of the artifact to be displayed on the portal.
+            filename: The file to be uploaded.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        return self._impl.error(task_id, exception, screenshot, attachments, tags)

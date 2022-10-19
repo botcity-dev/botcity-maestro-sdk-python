@@ -1,7 +1,9 @@
 import json
+import traceback
 from dataclasses import asdict
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
+from requests_toolbelt import MultipartEncoder
 
 import requests
 
@@ -26,7 +28,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             access_token (str): The access token obtained via login.
         """
         super().__init__(server=server, login=login, key=key)
-        print('CTOR V2')
 
     def _headers(self) -> Dict:
         """The HTTP header for BotCity Maestro communication"""
@@ -44,16 +45,11 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
-        print('Login V2')
         url = f'{self._server}/api/v2/workspace/login'
         data = {"login": self._login, "key": self._key}
         headers = {'Content-Type': 'application/json'}
 
-        print("data: ", data)
-        print("json", json.dumps(data))
         with requests.post(url, data=json.dumps(data), headers=headers) as req:
-            print(req.status_code)
-            print(req.text)
             if req.status_code == 200:
                 self.access_token = req.json()['accessToken']
             else:
@@ -76,19 +72,18 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         url = f'{self._server}/api/v2/alerts'
 
         data = {"taskId": task_id, "title": title,
-                "message": message, "type": alert_type,
-                "access_token": self.access_token
-                }
+                "message": message, "type": alert_type}
 
-        with requests.post(url, data=data) as req:
+        with requests.post(url, json=data, headers=self._headers()) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
+
                 raise ValueError('Error during alert. %s', req.text)
 
     @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
-                msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
+                msg_type: model.MessageType, group: Optional[str] = None):
         """
         Send an email message to the list of email and users given.
 
@@ -103,20 +98,15 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/message/send'
+        url = f'{self._server}/api/v2/message'
 
         if not group:
             group = ""
 
-        email_str = ",".join(email)
-        users_str = ",".join(users)
-
-        data = {"email": email_str, "users": users_str, "subject": subject, "body": body,
-                "type": msg_type, "group": group, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
+        data = {"emails": email, "logins": users, "subject": subject, "body": body,
+                "type": msg_type, "group": group}
+        with requests.post(url, json=data, headers=self._headers()) as req:
+            if req.status_code != 200:
                 raise ValueError(
                     'Error during message. Server returned %d. %s' %
                     (req.status_code, req.json().get('message', ''))
@@ -141,9 +131,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         }
         headers = self._headers()
         with requests.post(url, json=data, headers=headers) as req:
-            print(req.status_code)
-            print(req.text)
-            print(req.json())
             if req.status_code == 200:
                 payload = req.json().get('payload')
                 return model.AutomationTask.from_json(payload)
@@ -197,7 +184,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._server}/app/api/task/restart'
 
-        data = {"id": task_id, "access_token": self.access_token}
+        data = {"id": task_id}
         with requests.post(url, data=data) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
@@ -220,10 +207,9 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/get'
+        url = f'{self._server}/api/v2/task/{task_id}'
 
-        data = {"id": task_id, "access_token": self.access_token}
-        with requests.get(url, params=data) as req:
+        with requests.get(url, headers=self._headers()) as req:
             if req.status_code == 200:
                 payload = req.text
                 return model.AutomationTask.from_json(payload)
@@ -247,12 +233,12 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/log/create'
+        url = f'{self._server}/api/v2/log'
 
         cols = [asdict(c) for c in columns]
 
-        data = {"activityLabel": activity_label, "columns": json.dumps(cols), "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        data = {"activityLabel": activity_label, "columns": cols, 'organizationLabel': self._login}
+        with requests.post(url, json=data, headers=self._headers()) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -264,7 +250,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     @ensure_access_token()
-    def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
+    def new_log_entry(self, activity_label: str, values: Dict[str, object]):
         """
         Creates a new log entry.
 
@@ -275,15 +261,10 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newLogEntry'
+        url = f'{self._server}/api/v2/log/{activity_label}/entry'
 
-        data = {"logName": activity_label,
-                "columns": json.dumps(values),
-                "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
+        with requests.post(url, json=values, headers=self._headers()) as req:
+            if req.status_code != 200:
                 try:
                     message = 'Error during new log entry. Server returned %d. %s' % (
                         req.status_code, req.json().get('message', ''))
@@ -304,15 +285,13 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        # date  a partir desta data
-        # date em branco eh tudo
-        url = f'{self._server}/app/api/log/read'
+        url = f'{self._server}/api/v2/log/{activity_label}'
 
-        data = {"activityLabel": activity_label, "date": date, "access_token": self.access_token}
-        with requests.get(url, params=data) as req:
+        data = {"date": date}
+        with requests.get(url, params=data, headers=self._headers()) as req:
             if req.status_code == 200:
                 # TODO: Improve the way data is returned.
-                return [entry.get('columns') for entry in json.loads(req.json()['message'])]
+                return req.json()['columns']
             else:
                 try:
                     message = 'Error during log read. Server returned %d. %s' % (
@@ -322,7 +301,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     @ensure_access_token()
-    def delete_log(self, activity_label: str) -> model.ServerMessage:
+    def delete_log(self, activity_label: str):
         """
         Fetch log information.
 
@@ -335,13 +314,10 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         # date  a partir desta data
         # date em branco eh tudo
-        url = f'{self._server}/app/api/log/delete'
+        url = f'{self._server}/api/v2/log/{activity_label}'
 
-        data = {"activityLabel": activity_label, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
+        with requests.delete(url, headers=self._headers()) as req:
+            if req.status_code != 200:
                 try:
                     message = 'Error during log delete. Server returned %d. %s' % (
                         req.status_code, req.json().get('message', ''))
@@ -362,24 +338,16 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newArtifact'
+        artifact_id = self.create_artifact(task_id=task_id, name=artifact_name, filename=artifact_name)
+        url = f'{self._server}/api/v2/artifact/log/{json.loads(artifact_id.payload)["id"]}'
 
-        data = {
-            "taskId": task_id,
-            "name": artifact_name,
-            "access_token": self.access_token
-        }
-
-        files = {
-            'body': (
-                artifact_name, open(filepath, 'rb'),
-                'application/octet-stream', {'Expires': '0'}
-            )
-        }
-
-        with requests.post(url, data=data, files=files) as req:
+        data = MultipartEncoder(
+            fields={'file': (artifact_name, open(filepath, 'rb'))}
+        )
+        headers = {**self._headers(), 'Content-Type': data.content_type}
+        with requests.post(url, data=data, headers=headers) as req:
             if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
+                return artifact_id
             else:
                 try:
                     message = 'Error during artifact posting. Server returned %d. %s' % (
@@ -389,27 +357,51 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     @ensure_access_token()
-    def list_artifacts(self) -> List[model.Artifact]:
+    def create_artifact(self, task_id: int, name: str, filename: str) -> model.ServerMessage:
+        """
+        Creates a new artifact
+
+        Args:
+            task_id: The task unique identifier.
+            name: The name of the artifact to be displayed on the portal.
+            filename: The file to be uploaded.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        url = f'{self._server}/api/v2/artifact'
+        data = {'taskId': task_id, 'name': name, 'filename': filename}
+        with requests.post(url, json=data, headers=self._headers()) as req:
+            if req.status_code == 200:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                try:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    @ensure_access_token()
+    def list_artifacts(self, days: int = 7) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
 
         Returns:
             List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
         """
-        url = f'{self._server}/app/api/artifact/list'
+        url = f'{self._server}/api/v2/artifact?size=5&page=0&sort=dateCreation,desc&days={days}'
 
-        data = {
-            "access_token": self.access_token
-        }
-
-        with requests.get(url, params=data) as req:
+        with requests.get(url, headers=self._headers()) as req:
             if req.status_code == 200:
-                data = json.loads(req.text)
-                message = data.get("message", "")
-                if not message:
-                    return []
-
-                return [model.Artifact.from_dict(a) for a in json.loads(message)]
+                content = req.json()['content']
+                response = [model.Artifact.from_dict(a) for a in content]
+                for page in range(1, req.json()['totalPages']):
+                    url = f'{self._server}/api/v2/artifact?size=5&page={page}&sort=dateCreation,desc&days={days}'
+                    with requests.get(url, headers=self._headers()) as req:
+                        content = req.json()['content']
+                        response.extend([model.Artifact.from_dict(a) for a in content])
+                return response
             else:
                 try:
                     message = 'Error during artifact listing. Server returned %d. %s' % (
@@ -429,11 +421,9 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        url = f'{self._server}/app/api/artifact/get'
+        url = f'{self._server}/api/v2/artifact/{artifact_id}'
 
-        data = {"id": artifact_id, "access_token": self.access_token}
-
-        with requests.get(url, params=data) as req:
+        with requests.get(url, headers=self._headers()) as req:
             if req.status_code == 200:
                 h_content = req.headers['Content-Disposition']
 
@@ -473,3 +463,95 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
         execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
         return execution
+
+    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
+        """
+        Creates a new error
+
+        Args:
+            task_id: The task unique identifier.
+            exception: Error caught in except
+            screenshot: File path for screenshot
+            attachments: Object to filename and filepath.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        url = f'{self._server}/api/v2/error'
+        trace = " ".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+        data = {'taskId': task_id, 'type':exception.__class__.__name__, 'message': str(exception),
+                'stackTrace': trace, 'language': 'PYTHON', 'tags': tags}
+
+        response = None
+        with requests.post(url, json=data, headers=self._headers()) as req:
+            if req.status_code == 201:
+                response = req.json()
+            else:
+                try:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+        if screenshot:
+            self.create_screenshot(error_id=response.get('id'), filepath=screenshot)
+
+        if attachments:
+            self.create_attachment(error_id=response.get('id'), attachments=attachments)
+
+        return response
+
+    def create_screenshot(self, error_id: int, filepath: str) -> None:
+        """
+           Creates a new screenshot in error
+
+           Args:
+               error_id: The error unique identifier.
+               filepath: File path for screenshot
+           Returns:
+               None
+           """
+        url_screenshot = f'{self._server}/api/v2/error/{error_id}/screenshot'
+        data_screenshot = MultipartEncoder(
+            fields={'file': (filepath, open(filepath, 'rb'))}
+        )
+        headers = self._headers()
+        headers['Content-Type'] = data_screenshot.content_type
+
+        with requests.post(url_screenshot, data=data_screenshot, headers=headers) as req:
+            if req.status_code != 200:
+                try:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    def create_attachment(self, error_id: int, attachments: list):
+        """
+           Creates a new attachment in error
+
+           Args:
+               error_id: The error unique identifier.
+               attachments: Object to filename and filepath.
+           Returns:
+               None
+           """
+        url_attachments = f'{self._server}/api/v2/error/{error_id}/attachments'
+
+        for attachment in attachments:
+            file = MultipartEncoder(
+                fields={'file': (attachment['filename'], open(attachment['filepath'], 'rb'))}
+            )
+            headers = self._headers()
+            headers['Content-Type'] = file.content_type
+            with requests.post(url_attachments, data=file, headers=headers) as req:
+                if req.status_code != 200:
+                    try:
+                        message = 'Error during new log entry. Server returned %d. %s' % (
+                            req.status_code, req.json().get('message', ''))
+                    except ValueError:
+                        message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                    raise ValueError(message)
+
