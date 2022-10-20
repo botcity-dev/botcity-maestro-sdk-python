@@ -58,10 +58,8 @@ class BotMaestroSDK(BotMaestroSDKInterface):
 
         with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
             try:
-                print('req: ', req)
                 if req.status_code == 200:
                     version = req.json()['version']
-                    print('version: ', version)
                     self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
             finally:
                 if self._impl is None:

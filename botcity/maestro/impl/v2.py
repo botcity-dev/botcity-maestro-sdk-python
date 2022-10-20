@@ -1,14 +1,13 @@
 import json
 import traceback
 from dataclasses import asdict
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
-from requests_toolbelt import MultipartEncoder
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from requests_toolbelt import MultipartEncoder
 
 from .. import model
-from .interface import BotMaestroSDKInterface, ensure_access_token
+from .interface import BotMaestroSDKInterface
 
 
 class BotMaestroSDKV2(BotMaestroSDKInterface):
@@ -55,7 +54,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             else:
                 raise ValueError('Error during login. Server returned %d. %s' % (req.status_code, req.text))
 
-    @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
         """
         Register an alert message on the BotMaestro portal.
@@ -81,7 +79,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
                 raise ValueError('Error during alert. %s', req.text)
 
-    @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
                 msg_type: model.MessageType, group: Optional[str] = None):
         """
@@ -132,8 +129,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         headers = self._headers()
         with requests.post(url, json=data, headers=headers) as req:
             if req.status_code == 200:
-                payload = req.json().get('payload')
-                return model.AutomationTask.from_json(payload)
+                return model.AutomationTask.from_json(req.text)
             else:
                 try:
                     message = 'Error during task create. Server returned %d. %s' % (
@@ -171,7 +167,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during task finish. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
         """
         Restarts a given task.
@@ -196,7 +191,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during task restart. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
         Return details about a given task.
@@ -221,7 +215,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during task get. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
         Create a new log on the BotMaestro portal.
@@ -249,7 +242,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during new log. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]):
         """
         Creates a new log entry.
@@ -272,7 +264,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
         Fetch log information.
@@ -300,7 +291,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def delete_log(self, activity_label: str):
         """
         Fetch log information.
@@ -325,7 +315,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
         Upload a new artifact into the BotMaestro portal.
@@ -356,7 +345,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during artifact posting. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def create_artifact(self, task_id: int, name: str, filename: str) -> model.ServerMessage:
         """
         Creates a new artifact
@@ -382,7 +370,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def list_artifacts(self, days: int = 7) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
@@ -410,7 +397,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during artifact listing. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
         Retrieve an artifact from the BotMaestro portal.
@@ -425,11 +411,14 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
         with requests.get(url, headers=self._headers()) as req:
             if req.status_code == 200:
-                h_content = req.headers['Content-Disposition']
+                payload = req.json()
+                filename = payload['fileName']
 
-                filename = h_content[h_content.rfind('=') + 2:-1]
-                filename = filename[:filename.rfind('_')] + filename[filename.rfind('.'):]
-                return filename, req.content
+                url = f'{self.server}/api/v2/artifact/{artifact_id}/file'
+                with requests.get(url, headers=self._headers()) as req_file:
+                    file_content = req_file.content
+
+                return filename, file_content
             else:
                 try:
                     message = 'Error during artifact get. Server returned %d. %s' % (
@@ -438,7 +427,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during artifact get. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token(invoke=True)
     def get_execution(self, task_id: Optional[str] = None) -> model.BotExecution:
         """
         Fetch the BotExecution object for a given task.
@@ -479,7 +467,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._server}/api/v2/error'
         trace = " ".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-        data = {'taskId': task_id, 'type':exception.__class__.__name__, 'message': str(exception),
+        data = {'taskId': task_id, 'type': exception.__class__.__name__, 'message': str(exception),
                 'stackTrace': trace, 'language': 'PYTHON', 'tags': tags}
 
         response = None
@@ -552,6 +540,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                         message = 'Error during new log entry. Server returned %d. %s' % (
                             req.status_code, req.json().get('message', ''))
                     except ValueError:
-                        message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                        message = 'Error during new log entry. Server returned %d. %s' % (
+                            req.status_code, req.text)
                     raise ValueError(message)
-
