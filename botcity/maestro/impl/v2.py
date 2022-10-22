@@ -1,7 +1,7 @@
 import json
 import traceback
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import requests
 from requests_toolbelt import MultipartEncoder

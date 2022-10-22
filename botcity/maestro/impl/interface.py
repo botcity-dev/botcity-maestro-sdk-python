@@ -296,19 +296,6 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    @ensure_access_token()
-    def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
-        """
-        Retrieve an artifact from the BotMaestro portal.
-
-        Args:
-            artifact_id: The artifact unique identifier.
-
-        Returns:
-            Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
-        """
-        raise NotImplementedError
-
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
         Upload a new artifact into the BotMaestro portal.

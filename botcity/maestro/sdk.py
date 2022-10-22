@@ -59,7 +59,6 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
             try:
                 if req.status_code == 200:
-                    version = req.json()['version']
                     self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
             finally:
                 if self._impl is None:
@@ -100,7 +99,8 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        return self._impl.message(email=email, users=users, subject=subject, body=body, msg_type=msg_type, group=group)
+        return self._impl.message(email=email, users=users, subject=subject, body=body, msg_type=msg_type,
+                                  group=group)
 
     @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
