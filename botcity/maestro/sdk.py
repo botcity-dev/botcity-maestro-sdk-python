@@ -26,7 +26,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         Attributes:
             access_token (str): The access token obtained via login.
         """
-        super().__init__(server=server, login=locals, key=key)
+        super().__init__(server=server, login=login, key=key)
         self._impl = None
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
