@@ -310,7 +310,7 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
-    def list_artifacts(self, days: int = 7) -> List[model.Artifact]:
+    def list_artifacts(self) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
 

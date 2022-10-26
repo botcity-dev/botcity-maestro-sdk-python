@@ -27,7 +27,6 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             access_token (str): The access token obtained via login.
         """
         super().__init__(server=server, login=login, key=key)
-        self._impl = None
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -59,10 +58,10 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
             try:
                 if req.status_code == 200:
-                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
+                    self._impl: BotMaestroSDKV2 = BotMaestroSDKV2(self.server, self._login, self._key)
             finally:
                 if self._impl is None:
-                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key)
+                    self._impl: BotMaestroSDKV1 = BotMaestroSDKV1(self.server, self._login, self._key)
         self._impl.login()
         self.access_token = self._impl.access_token
 

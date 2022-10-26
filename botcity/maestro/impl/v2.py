@@ -80,7 +80,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError('Error during alert. %s', req.text)
 
     def message(self, email: List[str], users: List[str], subject: str, body: str,
-                msg_type: model.MessageType, group: Optional[str] = None):
+                msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
         """
         Send an email message to the list of email and users given.
 
@@ -108,6 +108,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     'Error during message. Server returned %d. %s' %
                     (req.status_code, req.json().get('message', ''))
                 )
+            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            return model.ServerMessage.from_json(payload=payload)
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
@@ -242,7 +244,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during new log. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    def new_log_entry(self, activity_label: str, values: Dict[str, object]):
+    def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
         """
         Creates a new log entry.
 
@@ -263,6 +265,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 except ValueError:
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
+            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            return model.ServerMessage.from_json(payload=payload)
 
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
@@ -281,8 +285,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         data = {"date": date}
         with requests.get(url, params=data, headers=self._headers()) as req:
             if req.status_code == 200:
-                # TODO: Improve the way data is returned.
-                return req.json()['columns']
+                entries = req.json()
+                return [column for column in entries.get('columns')]
             else:
                 try:
                     message = 'Error during log read. Server returned %d. %s' % (
@@ -291,7 +295,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    def delete_log(self, activity_label: str):
+    def delete_log(self, activity_label: str) -> model.ServerMessage:
         """
         Fetch log information.
 
@@ -314,6 +318,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 except ValueError:
                     message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
+            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            return model.ServerMessage.from_json(payload=payload)
 
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
