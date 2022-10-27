@@ -268,3 +268,25 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
         return self._impl.error(task_id, exception, screenshot, attachments, tags)
+
+    def get_credential(self, label: str, key: str):
+        """
+        Get value in key inside credentials
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+
+        Returns:
+            Key value that was requested
+        """
+        return self._impl.get_credential(label, key)
+
+    def create_credential(self, label: str, key: str, value):
+        """
+        Create credential
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            value: Credential value
+        """
+        return self._impl.create_credential(label, key, value)

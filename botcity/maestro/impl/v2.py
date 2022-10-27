@@ -549,3 +549,42 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                         message = 'Error during new log entry. Server returned %d. %s' % (
                             req.status_code, req.text)
                     raise ValueError(message)
+
+    def get_credential(self, label: str, key: str):
+        """
+        Get value in key inside credentials
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+
+        Returns:
+            Key value that was requested
+        """
+        url = f'{self._server}/api/v2/credential/{label}/key/{key}'
+
+        with requests.get(url, headers=self._headers()) as req:
+            if req.status_code == 200:
+                return req.text
+            else:
+                try:
+                    message = 'Error during log read. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    def create_credential(self, label: str, key: str, value):
+        data = {
+            'key': key,
+            'value': value
+        }
+        url = f'{self._server}/api/v2/credential/{label}/key'
+
+        with requests.post(url, json=data, headers=self._headers()) as req:
+            if req.status_code != 201:
+                try:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)

@@ -478,3 +478,25 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
         raise NotImplementedError
+
+    def get_credential(self, label: str, key: str):
+        """
+        Get value in key inside credentials
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+
+        Returns:
+            Key value that was requested
+        """
+        raise NotImplementedError
+
+    def create_credential(self, label: str, key: str, value):
+        """
+        Create credential
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            value: Credential value
+        """
+        raise NotImplementedError
