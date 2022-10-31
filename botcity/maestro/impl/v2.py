@@ -588,7 +588,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                             req.status_code, req.json().get('message', ''))
                     except ValueError:
 
-                        message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                        message = 'Error during new log entry. Server returned %d. %s' % (
+                            req.status_code, req.text)
                     raise ValueError(message)
         except Exception as error:
             if f'{error}'.lower() != 'credential not found':
