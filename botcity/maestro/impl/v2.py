@@ -574,29 +574,23 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     def create_credential(self, label: str, key: str, value):
-        try:
-            credential = self.get_credential_by_label(label=label)
-            data = {
-                'key': key,
-                'value': value
-            }
-            url = f'{self._server}/api/v2/credential/{label}/key'
-            with requests.post(url, json=data, headers=self._headers()) as req:
-                if req.status_code != 201:
-                    try:
-                        message = 'Error during new log entry. Server returned %d. %s' % (
-                            req.status_code, req.json().get('message', ''))
-                    except ValueError:
+        credential = self.get_credential_by_label(label=label)
 
-                        message = 'Error during new log entry. Server returned %d. %s' % (
-                            req.status_code, req.text)
-                    raise ValueError(message)
-        except Exception as error:
-            if f'{error}'.lower() != 'credential not found':
-                raise ValueError(message)
-            credential = self.create_credential_by_label(label=label, key=key, value=value)
-
-        return credential
+        if credential is None:
+            response = self.create_credential_by_label(label=label, key=key, value=value)
+            if response is None:
+                raise ValueError('Error during create credential.')
+            return response.to_json()
+        data = {
+            'key': key,
+            'value': value
+        }
+        url = f'{self._server}/api/v2/credential/{label}/key'
+        with requests.post(url, json=data, headers=self._headers()) as req:
+            if req.ok:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                req.raise_for_status()
 
     def get_credential_by_label(self, label):
         """
@@ -609,14 +603,10 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         url = f'{self._server}/api/v2/credential/{label}'
 
         with requests.get(url, headers=self._headers()) as req:
-            if req.status_code == 200:
+            if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
-                try:
-                    message = req.json().get('message', '')
-                except ValueError:
-                    message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
+                return None
 
     def create_credential_by_label(self, label: str, key: str, value):
         data = {
@@ -628,9 +618,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         url = f'{self._server}/api/v2/credential'
 
         with requests.post(url, json=data, headers=self._headers()) as req:
-            if req.status_code == 200:
-                try:
-                    return model.ServerMessage.from_json(req.text)
-                except ValueError:
-                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
+            if req.ok:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                return None
