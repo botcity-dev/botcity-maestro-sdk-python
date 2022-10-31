@@ -108,7 +108,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                     'Error during message. Server returned %d. %s' %
                     (req.status_code, req.json().get('message', ''))
                 )
-            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            payload = json.dumps({"message": req.text, "type": req.status_code})
             return model.ServerMessage.from_json(payload=payload)
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
@@ -265,7 +265,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 except ValueError:
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
-            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            payload = json.dumps({"message": req.text, "type": req.status_code})
             return model.ServerMessage.from_json(payload=payload)
 
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
@@ -318,7 +318,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 except ValueError:
                     message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
-            payload = json.dumps({"message": req.text, "type":  req.status_code})
+            payload = json.dumps({"message": req.text, "type": req.status_code})
             return model.ServerMessage.from_json(payload=payload)
 
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
@@ -574,17 +574,62 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     def create_credential(self, label: str, key: str, value):
+        try:
+            credential = self.get_credential_by_label(label=label)
+            data = {
+                'key': key,
+                'value': value
+            }
+            url = f'{self._server}/api/v2/credential/{label}/key'
+            with requests.post(url, json=data, headers=self._headers()) as req:
+                if req.status_code != 201:
+                    try:
+                        message = 'Error during new log entry. Server returned %d. %s' % (
+                            req.status_code, req.json().get('message', ''))
+                    except ValueError:
+
+                        message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
+                    raise ValueError(message)
+        except Exception as error:
+            if f'{error}'.lower() != 'credential not found':
+                raise ValueError(message)
+            credential = self.create_credential_by_label(label=label, key=key, value=value)
+
+        return credential
+
+    def get_credential_by_label(self, label):
+        """
+        Get dict in key inside credentials
+        Args:
+            label: Credential set name
+        Returns:
+            Credential dict
+        """
+        url = f'{self._server}/api/v2/credential/{label}'
+
+        with requests.get(url, headers=self._headers()) as req:
+            if req.status_code == 200:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                try:
+                    message = req.json().get('message', '')
+                except ValueError:
+                    message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    def create_credential_by_label(self, label: str, key: str, value):
         data = {
-            'key': key,
-            'value': value
+            'label': label,
+            'secrets': [
+                {'key': key, 'value': value, 'valid': True}
+            ]
         }
-        url = f'{self._server}/api/v2/credential/{label}/key'
+        url = f'{self._server}/api/v2/credential'
 
         with requests.post(url, json=data, headers=self._headers()) as req:
-            if req.status_code != 201:
+            if req.status_code == 200:
                 try:
-                    message = 'Error during new log entry. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
+                    return model.ServerMessage.from_json(req.text)
                 except ValueError:
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)

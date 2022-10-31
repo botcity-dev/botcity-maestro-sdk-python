@@ -281,7 +281,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_credential(label, key)
 
-    def create_credential(self, label: str, key: str, value):
+    def create_credential(self, label: str, key: str, value) -> model.ServerMessage:
         """
         Create credential
         Args:
