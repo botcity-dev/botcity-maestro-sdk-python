@@ -7,7 +7,6 @@ from packaging import version
 
 from .. import model
 
-
 F = TypeVar('F', bound=Callable[..., Any])
 
 
@@ -51,6 +50,27 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
                             return lambda *args, **kwargs: None
             else:
                 raise NotImplementedError('ensure_token is only valid for BotMaestroSDK methods.')
+            return func(obj, *args, **kwargs)
+
+        return cast(F, wrapper)
+    return decorator
+
+
+def ensure_implementation() -> Callable[[F], F]:
+    """
+    Decorator to ensure that an implementation is available.
+
+    Args:
+        func (callable): The function to be wrapped
+    Returns:
+        wrapper (callable): The decorated function
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if isinstance(obj, BotMaestroSDKInterface):
+                if obj._impl is None:
+                    obj._define_implementation()
             return func(obj, *args, **kwargs)
 
         return cast(F, wrapper)
@@ -122,12 +142,14 @@ class BotMaestroSDKInterface:
     def from_sys_args(cls, default_server="", default_login="", default_key=""):
         if len(sys.argv) >= 4:
             maestro = cls()
+            organization = ""
             try:
                 server, task_id, token, organization, *_ = sys.argv[1:]
             except ValueError:
                 server, task_id, token, *_ = sys.argv[1:]
             maestro.server = server
             maestro.access_token = token
+            maestro.organization = organization
             maestro.task_id = task_id
         else:
             maestro = cls(
@@ -159,6 +181,15 @@ class BotMaestroSDKInterface:
     @access_token.setter
     def access_token(self, token):
         self._access_token = token
+
+    @property
+    def organization(self):
+        """The organization label"""
+        return self._login
+
+    @organization.setter
+    def organization(self, organization):
+        self._login = organization
 
     @property
     def task_id(self):

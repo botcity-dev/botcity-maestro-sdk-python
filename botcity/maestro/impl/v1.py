@@ -10,7 +10,8 @@ from .. import model
 
 class BotMaestroSDKV1(BotMaestroSDKInterface):
 
-    def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
+    def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None,
+                 sdk: Optional[BotMaestroSDKInterface] = None):
         """
         Main class to interact with the BotMaestro web portal.
 
@@ -20,11 +21,13 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
             server: The server IP or name
             login: The username provided via server configuration. Available under `Dev. Environment`
             key: The access key provided via server configuration. Available under `Dev. Environment`
+            sdk: The BotMaestroSDK instance
 
         Attributes:
             access_token (str): The access token obtained via login.
         """
         super().__init__(server=server, login=login, key=key)
+        self._sdk: BotMaestroSDKInterface = sdk  # type: ignore
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -38,8 +41,8 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
-        url = f'{self._server}/app/api/login'
-        data = {"userLogin": self._login, "key": self._key}
+        url = f'{self._sdk._server}/app/api/login'
+        data = {"userLogin": self._sdk._login, "key": self._sdk._key}
 
         with requests.post(url, data=data) as req:
             if req.status_code == 200:
@@ -61,7 +64,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/alert/send'
+        url = f'{self._sdk._server}/app/api/alert/send'
 
         data = {"taskId": task_id, "title": title,
                 "message": message, "type": alert_type,
@@ -91,7 +94,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/message/send'
+        url = f'{self._sdk._server}/app/api/message/send'
 
         if not group:
             group = ""
@@ -123,7 +126,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/create'
+        url = f'{self._sdk._server}/app/api/task/create'
 
         data = {
             "activityLabel": activity_label, "taskForTest": str(test).lower(), "access_token": self.access_token
@@ -156,7 +159,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/finish'
+        url = f'{self._sdk._server}/app/api/task/finish'
 
         processed_items = "1"  # TODO: Check this constant value here.
 
@@ -183,7 +186,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/restart'
+        url = f'{self._sdk._server}/app/api/task/restart'
 
         data = {"id": task_id, "access_token": self.access_token}
         with requests.post(url, data=data) as req:
@@ -207,7 +210,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/get'
+        url = f'{self._sdk._server}/app/api/task/get'
 
         data = {"id": task_id, "access_token": self.access_token}
         with requests.get(url, params=data) as req:
@@ -233,7 +236,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/log/create'
+        url = f'{self._sdk._server}/app/api/log/create'
 
         cols = [asdict(c) for c in columns]
 
@@ -260,7 +263,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newLogEntry'
+        url = f'{self._sdk._server}/app/api/newLogEntry'
 
         data = {"logName": activity_label,
                 "columns": json.dumps(values),
@@ -290,7 +293,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         """
         # date  a partir desta data
         # date em branco eh tudo
-        url = f'{self._server}/app/api/log/read'
+        url = f'{self._sdk._server}/app/api/log/read'
 
         data = {"activityLabel": activity_label, "date": date, "access_token": self.access_token}
         with requests.get(url, params=data) as req:
@@ -318,7 +321,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         """
         # date  a partir desta data
         # date em branco eh tudo
-        url = f'{self._server}/app/api/log/delete'
+        url = f'{self._sdk._server}/app/api/log/delete'
 
         data = {"activityLabel": activity_label, "access_token": self.access_token}
         with requests.post(url, data=data) as req:
@@ -344,7 +347,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newArtifact'
+        url = f'{self._sdk._server}/app/api/newArtifact'
 
         data = {
             "taskId": task_id,
@@ -377,7 +380,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
         """
-        url = f'{self._server}/app/api/artifact/list'
+        url = f'{self._sdk._server}/app/api/artifact/list'
 
         data = {
             "access_token": self.access_token
@@ -409,7 +412,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        url = f'{self._server}/app/api/artifact/get'
+        url = f'{self._sdk._server}/app/api/artifact/get'
 
         data = {"id": artifact_id, "access_token": self.access_token}
 

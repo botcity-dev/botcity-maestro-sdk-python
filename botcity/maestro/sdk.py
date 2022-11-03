@@ -5,7 +5,7 @@ import urllib3
 
 from . import model
 from .impl import (BotMaestroSDKInterface, BotMaestroSDKV1, BotMaestroSDKV2,
-                   ensure_access_token, since_version)
+                   ensure_access_token, ensure_implementation, since_version)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -27,6 +27,21 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             access_token (str): The access token obtained via login.
         """
         super().__init__(server=server, login=login, key=key)
+
+    def _define_implementation(self):
+        url = f'{self._server}/api/v2/maestro/version'
+
+        with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
+            try:
+                if req.status_code == 200:
+                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+                    self._version = req.json()['version']
+            finally:
+                if self._impl is None:
+                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
+                    self._version = "1.0.0"
+        self._impl.access_token = self.access_token
+        self._impl._login = self._login
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -52,20 +67,11 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             raise ValueError('Key is required.')
         self.logoff()
 
-        url = f'{self._server}/api/v2/maestro/version'
-
-        with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
-            try:
-                if req.status_code == 200:
-                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
-                    self._version = req.json()['version']
-            finally:
-                if self._impl is None:
-                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key)
-                    self._version = "1.0.0"
+        self._define_implementation()
         self._impl.login()
         self.access_token = self._impl.access_token
 
+    @ensure_implementation()
     @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
         """
@@ -82,6 +88,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.alert(task_id=task_id, title=title, message=message, alert_type=alert_type)
 
+    @ensure_implementation()
     @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
                 msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
@@ -102,6 +109,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         return self._impl.message(email=email, users=users, subject=subject, body=body, msg_type=msg_type,
                                   group=group)
 
+    @ensure_implementation()
     @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
@@ -118,6 +126,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test)
 
+    @ensure_implementation()
     @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
                     message: str = "") -> model.ServerMessage:
@@ -135,6 +144,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.finish_task(task_id=task_id, status=status, message=message)
 
+    @ensure_implementation()
     @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
         """
@@ -148,6 +158,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.restart_task(task_id=task_id)
 
+    @ensure_implementation()
     @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
@@ -161,6 +172,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_task(task_id=task_id)
 
+    @ensure_implementation()
     @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
@@ -175,6 +187,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.new_log(activity_label=activity_label, columns=columns)
 
+    @ensure_implementation()
     @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
         """
@@ -189,6 +202,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.new_log_entry(activity_label=activity_label, values=values)
 
+    @ensure_implementation()
     @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
@@ -204,6 +218,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_log(activity_label=activity_label, date=date)
 
+    @ensure_implementation()
     @ensure_access_token()
     def delete_log(self, activity_label: str) -> model.ServerMessage:
         """
@@ -218,6 +233,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.delete_log(activity_label=activity_label)
 
+    @ensure_implementation()
     @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
@@ -233,6 +249,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.post_artifact(task_id=task_id, artifact_name=artifact_name, filepath=filepath)
 
+    @ensure_implementation()
     @ensure_access_token()
     def list_artifacts(self) -> List[model.Artifact]:
         """
@@ -243,6 +260,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.list_artifacts()
 
+    @ensure_implementation()
     @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
@@ -256,6 +274,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_artifact(artifact_id=artifact_id)
 
+    @ensure_implementation()
     @since_version("2.0.0")
     @ensure_access_token()
     def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
@@ -272,6 +291,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.error(task_id, exception, screenshot, attachments, tags)
 
+    @ensure_implementation()
     @since_version("2.0.0")
     @ensure_access_token()
     def get_credential(self, label: str, key: str) -> str:
@@ -286,6 +306,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_credential(label, key)
 
+    @ensure_implementation()
     @since_version("2.0.0")
     @ensure_access_token()
     def create_credential(self, label: str, key: str, value):

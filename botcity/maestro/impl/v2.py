@@ -4,6 +4,7 @@ import os
 import platform
 import traceback
 from dataclasses import asdict
+from io import IOBase, StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -17,7 +18,8 @@ from .interface import BotMaestroSDKInterface
 
 class BotMaestroSDKV2(BotMaestroSDKInterface):
 
-    def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
+    def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None,
+                 sdk: Optional[BotMaestroSDKInterface] = None):
         """
         Main class to interact with the BotMaestro web portal.
 
@@ -27,15 +29,21 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             server: The server IP or name
             login: The username provided via server configuration. Available under `Dev. Environment`
             key: The access key provided via server configuration. Available under `Dev. Environment`
+            sdk: The BotMaestroSDK instance
 
         Attributes:
             access_token (str): The access token obtained via login.
         """
         super().__init__(server=server, login=login, key=key)
+        self._sdk: BotMaestroSDKInterface = sdk  # type: ignore
 
     def _headers(self) -> Dict:
         """The HTTP header for BotCity Maestro communication"""
-        return {'Content-Type': 'application/json', "token": self.access_token, "organization": self._login}
+        return {
+            "Content-Type": "application/json",
+            "token": self._sdk.access_token,
+            "organization": self._sdk.organization
+        }
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -49,8 +57,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
-        url = f'{self._server}/api/v2/workspace/login'
-        data = {"login": self._login, "key": self._key}
+        url = f'{self._sdk._server}/api/v2/workspace/login'
+        data = {"login": self._sdk.organization, "key": self._sdk._key}
         headers = {'Content-Type': 'application/json'}
 
         with requests.post(url, data=json.dumps(data), headers=headers) as req:
@@ -72,7 +80,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/alerts'
+        url = f'{self._sdk._server}/api/v2/alerts'
 
         data = {"taskId": task_id, "title": title,
                 "message": message, "type": alert_type}
@@ -100,7 +108,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/message'
+        url = f'{self._sdk._server}/api/v2/message'
 
         if not group:
             group = ""
@@ -129,7 +137,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/api/v2/task'
+        url = f'{self._sdk._server}/api/v2/task'
         data = {
             "activityLabel": activity_label, "test": test, "parameters": parameters
         }
@@ -159,7 +167,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/task/{task_id}'
+        url = f'{self._sdk._server}/api/v2/task/{task_id}'
         data = {"finishStatus": status, "finishMessage": message,
                 "state": "FINISHED"}
         headers = self._headers()
@@ -184,7 +192,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/restart'
+        url = f'{self._sdk._server}/app/api/task/restart'
 
         data = {"id": task_id}
         with requests.post(url, data=data) as req:
@@ -208,7 +216,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/api/v2/task/{task_id}'
+        url = f'{self._sdk._server}/api/v2/task/{task_id}'
 
         with requests.get(url, headers=self._headers()) as req:
             if req.ok:
@@ -233,11 +241,11 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/log'
+        url = f'{self._sdk._server}/api/v2/log'
 
         cols = [asdict(c) for c in columns]
 
-        data = {"activityLabel": activity_label, "columns": cols, 'organizationLabel': self._login}
+        data = {"activityLabel": activity_label, "columns": cols, 'organizationLabel': self._sdk.organization}
         with requests.post(url, json=data, headers=self._headers()) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
@@ -260,7 +268,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/log/{activity_label}/entry'
+        url = f'{self._sdk._server}/api/v2/log/{activity_label}/entry'
 
         with requests.post(url, json=values, headers=self._headers()) as req:
             if req.status_code != 200:
@@ -285,7 +293,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        url = f'{self._server}/api/v2/log/{activity_label}'
+        url = f'{self._sdk._server}/api/v2/log/{activity_label}'
 
         days = 365  # 1 year is enough
         if date:
@@ -298,7 +306,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 if not columns:
                     raise ValueError('Malformed log. No columns available.')
                 names_for_labels = {c['label']: c['name'] for c in columns}
-                url = f'{self._server}/api/v2/log/{activity_label}/entry-list'
+                url = f'{self._sdk._server}/api/v2/log/{activity_label}/entry-list'
 
                 data = {"days": days}
                 with requests.get(url, params=data, headers=self._headers()) as entry_req:
@@ -340,7 +348,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         # date  a partir desta data
         # date em branco eh tudo
-        url = f'{self._server}/api/v2/log/{activity_label}'
+        url = f'{self._sdk._server}/api/v2/log/{activity_label}'
 
         with requests.delete(url, headers=self._headers()) as req:
             if req.status_code != 200:
@@ -366,7 +374,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
         artifact_id = self.create_artifact(task_id=task_id, name=artifact_name, filename=artifact_name)
-        url = f'{self._server}/api/v2/artifact/log/{json.loads(artifact_id.payload)["id"]}'
+        url = f'{self._sdk._server}/api/v2/artifact/log/{json.loads(artifact_id.payload)["id"]}'
 
         with open(filepath, 'rb') as f:
             data = MultipartEncoder(
@@ -397,7 +405,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/api/v2/artifact'
+        url = f'{self._sdk._server}/api/v2/artifact'
         data = {'taskId': task_id, 'name': name, 'filename': filename}
         with requests.post(url, json=data, headers=self._headers()) as req:
             if req.ok:
@@ -417,14 +425,14 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
         """
-        url = f'{self._server}/api/v2/artifact?size=5&page=0&sort=dateCreation,desc&days={days}'
+        url = f'{self._sdk._server}/api/v2/artifact?size=5&page=0&sort=dateCreation,desc&days={days}'
 
         with requests.get(url, headers=self._headers()) as req:
             if req.ok:
                 content = req.json()['content']
                 response = [model.Artifact.from_dict(a) for a in content]
                 for page in range(1, req.json()['totalPages']):
-                    url = f'{self._server}/api/v2/artifact?size=5&page={page}&sort=dateCreation,desc&days={days}'
+                    url = f'{self._sdk._server}/api/v2/artifact?size=5&page={page}&sort=dateCreation,desc&days={days}'
                     with requests.get(url, headers=self._headers()) as req:
                         content = req.json()['content']
                         response.extend([model.Artifact.from_dict(a) for a in content])
@@ -447,7 +455,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        url = f'{self._server}/api/v2/artifact/{artifact_id}'
+        url = f'{self._sdk._server}/api/v2/artifact/{artifact_id}'
 
         with requests.get(url, headers=self._headers()) as req:
             if req.ok:
@@ -484,7 +492,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Raises:
             ValueError: If the request fails, a ValueError exception is raised.
         """
-        url = f'{self._server}/api/v2/error'
+        url = f'{self._sdk._server}/api/v2/error'
         trace = " ".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
 
         if not tags:
@@ -512,8 +520,28 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         if screenshot:
             self._create_screenshot(error_id=response.get('id'), filepath=screenshot)
 
+        # pip list
+        packages = [(dist.name.lower(), dist.version) for dist in importlib_metadata.distributions()]
+        packages.sort(key=lambda x: x[0])  # type: ignore
+        buffer = StringIO()
+        buffer.writelines([f"{name}=={version}{os.linesep}" for name, version in packages])
+        buffer.flush()
+        self._create_attachment(
+            error_id=response.get('id'),
+            filename="piplist.txt",
+            buffer=buffer
+        )
+        buffer.close()
+
         if attachments:
-            self._create_attachment(error_id=response.get('id'), attachments=attachments)
+            for attachment in attachments:
+                filepath = os.path.expandvars(os.path.expanduser(attachment))
+                with open(filepath, 'rb') as f:
+                    self._create_attachment(
+                        error_id=response.get('id'),
+                        filename=Path(filepath).name,
+                        buffer=f
+                    )
 
         return response
 
@@ -534,11 +562,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         tags["os_version"] = os_version
         tags["python_version"] = platform.python_version()
 
-        packages = [(dist.name.lower(), dist.version) for dist in importlib_metadata.distributions()]
-        packages.sort(key=lambda x: x[0])  # type: ignore
-        packages_dict = {name: version for name, version in packages}
-        tags["pip_list"] = json.dumps(packages_dict)
-
         return tags
 
     def _create_screenshot(self, error_id: int, filepath: str) -> None:
@@ -551,7 +574,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             None
         """
-        url_screenshot = f'{self._server}/api/v2/error/{error_id}/screenshot'
+        url_screenshot = f'{self._sdk._server}/api/v2/error/{error_id}/screenshot'
         filepath = os.path.expandvars(os.path.expanduser(filepath))
 
         with open(filepath, 'rb') as f:
@@ -571,34 +594,31 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                             req.status_code, req.text)
                     raise ValueError(message)
 
-    def _create_attachment(self, error_id: int, attachments: List[str]):
+    def _create_attachment(self, error_id: int, filename: str, buffer: IOBase):
         """
         Creates a new attachment in error
 
         Args:
-            error_id: The error unique identifier.
-            attachments: List of filepaths.
+            error_id (int): The error unique identifier.
+            filename (str): The file name to be displayed.
+            buffer (IOBase): The file handler buffer.
         """
-        url_attachments = f'{self._server}/api/v2/error/{error_id}/attachments'
+        url_attachments = f'{self._sdk._server}/api/v2/error/{error_id}/attachments'
 
-        for attachment in attachments:
-            filepath = os.path.expandvars(os.path.expanduser(attachment))
-
-            with open(filepath, 'rb') as f:
-                file = MultipartEncoder(
-                    fields={'file': (Path(filepath).name, f)}
-                )
-                headers = self._headers()
-                headers['Content-Type'] = file.content_type
-                with requests.post(url_attachments, data=file, headers=headers) as req:
-                    if not req.ok:
-                        try:
-                            message = 'Error during new log entry. Server returned %d. %s' % (
-                                req.status_code, req.json().get('message', ''))
-                        except ValueError:
-                            message = 'Error during new log entry. Server returned %d. %s' % (
-                                req.status_code, req.text)
-                        raise ValueError(message)
+        file = MultipartEncoder(
+            fields={'file': (filename, buffer)}
+        )
+        headers = self._headers()
+        headers['Content-Type'] = file.content_type
+        with requests.post(url_attachments, data=file, headers=headers) as req:
+            if not req.ok:
+                try:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during new log entry. Server returned %d. %s' % (
+                        req.status_code, req.text)
+                raise ValueError(message)
 
     def get_credential(self, label: str, key: str) -> str:
         """
@@ -610,7 +630,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             value (str): Key value that was requested
         """
-        url = f'{self._server}/api/v2/credential/{label}/key/{key}'
+        url = f'{self._sdk._server}/api/v2/credential/{label}/key/{key}'
 
         with requests.get(url, headers=self._headers()) as req:
             if req.ok:
@@ -643,7 +663,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             'key': key,
             'value': value
         }
-        url = f'{self._server}/api/v2/credential/{label}/key'
+        url = f'{self._sdk._server}/api/v2/credential/{label}/key'
         with requests.post(url, json=data, headers=self._headers()) as req:
             if not req.ok:
                 req.raise_for_status()
@@ -656,7 +676,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Credential dict
         """
-        url = f'{self._server}/api/v2/credential/{label}'
+        url = f'{self._sdk._server}/api/v2/credential/{label}'
 
         with requests.get(url, headers=self._headers()) as req:
             if req.ok:
@@ -671,7 +691,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 {'key': key, 'value': value, 'valid': True}
             ]
         }
-        url = f'{self._server}/api/v2/credential'
+        url = f'{self._sdk._server}/api/v2/credential'
 
         with requests.post(url, json=data, headers=self._headers()) as req:
             if req.ok:
