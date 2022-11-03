@@ -1,5 +1,4 @@
 import datetime
-import importlib.metadata
 import json
 import os
 import platform
@@ -8,6 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import importlib_metadata
 import requests
 from requests_toolbelt import MultipartEncoder
 
@@ -534,7 +534,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         tags["os_version"] = os_version
         tags["python_version"] = platform.python_version()
 
-        packages = [(dist.name.lower(), dist.version) for dist in importlib.metadata.distributions()]
+        packages = [(dist.name.lower(), dist.version) for dist in importlib_metadata.distributions()]
         packages.sort(key=lambda x: x[0])  # type: ignore
         packages_dict = {name: version for name, version in packages}
         tags["pip_list"] = json.dumps(packages_dict)
