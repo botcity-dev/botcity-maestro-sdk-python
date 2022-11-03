@@ -3,7 +3,10 @@ import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 
+from packaging import version
+
 from .. import model
+
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -21,7 +24,6 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            print('Ensure Token: ', obj)
             if isinstance(obj, BotMaestroSDKInterface):
                 if obj.access_token is None:
                     if obj.RAISE_NOT_CONNECTED:
@@ -55,6 +57,38 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
     return decorator
 
 
+def since_version(v: str) -> Callable[[F], F]:
+    """
+    Decorator to ensure that a method is availble for a given Maestro backend version.
+
+    Args:
+        func (callable): The function to be wrapped
+        v (str): The minimum required version in the format X.Y.Z
+    Returns:
+        wrapper (callable): The decorated function
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if isinstance(obj, BotMaestroSDKInterface):
+                if obj.version is None:
+                    if obj.RAISE_NOT_CONNECTED:
+                        raise RuntimeError('Maestro version not available. Make sure to invoke login first.')
+                else:
+                    if version.parse(obj.version) < version.parse(v):
+                        message = f'''
+                        The method {func.__name__} is not available for your version of BotCity Maestro.
+                        Your version: {obj.version} - Required version: {v}. Please request an update.
+                        '''
+                        raise RuntimeError(message)
+            else:
+                raise NotImplementedError('since_version is only valid for BotMaestroSDK methods.')
+            return func(obj, *args, **kwargs)
+
+        return cast(F, wrapper)
+    return decorator
+
+
 class BotMaestroSDKInterface:
 
     _notified_disconnect = False
@@ -79,7 +113,8 @@ class BotMaestroSDKInterface:
         self._key = key
         self._access_token = None
         self._task_id = None
-        self._impl = None
+        self._impl: BotMaestroSDKInterface = None  # type: ignore
+        self._version = None
 
         self.server = server
 
@@ -134,6 +169,11 @@ class BotMaestroSDKInterface:
     def task_id(self, task_id):
         self._task_id = task_id
 
+    @property
+    def version(self):
+        """The BotCity Maestro Backend version"""
+        return self._version
+
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
         Obtain an access token with the configured BotMaestro portal.
@@ -153,7 +193,7 @@ class BotMaestroSDKInterface:
         Revoke the access token used to communicate with the BotMaestro portal.
         """
         self.access_token = None
-        self._impl = None
+        self._impl = None  # type: ignore
 
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
         """
@@ -357,16 +397,44 @@ class BotMaestroSDKInterface:
         execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
         return execution
 
-    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
-        """
-        Creates a new artifact
+    def error(self, task_id: int, exception: Exception, screenshot: Optional[str] = None,
+              attachments: Optional[List[str]] = None, tags: Optional[Dict[str, str]] = None):
+        """Create a new Error entry.
 
         Args:
-            task_id: The task unique identifier.
-            name: The name of the artifact to be displayed on the portal.
-            filename: The file to be uploaded.
+            task_id (int): The task unique identifier.
+            exception (Exception): The exception object.
+            screenshot (Optional[str], optional): File path for a screenshot to be attached
+                to the error. Defaults to None.
+            attachments (Optional[List[str]], optional): Additional files to be sent along
+                with the error entry. Defaults to None.
+            tags (Optional[Dict[str, str]], optional): Dictionary with tags to be associated
+                with the error entry. Defaults to None.
+
+        Raises:
+            ValueError: If the request fails, a ValueError exception is raised.
+        """
+        raise NotImplementedError
+
+    def create_credential(self, label: str, key: str, value: str):
+        """Create a new key/value entry for a credentials set.
+
+        Args:
+            label (str): The credential set label
+            key (str): The key identifier for this credential
+            value (str): The value associated with this key
+
+        """
+        raise NotImplementedError
+
+    def get_credential(self, label: str, key: str) -> str:
+        """
+        Get value in key inside credentials
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
 
         Returns:
-            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+            value (str): Key value that was requested
         """
         raise NotImplementedError

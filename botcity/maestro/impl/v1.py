@@ -110,7 +110,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     (req.status_code, req.json().get('message', ''))
                 )
 
-    @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
         """
@@ -143,7 +142,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during task create. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
                     message: str = "") -> model.ServerMessage:
         """
@@ -175,7 +173,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during task finish. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
         """
         Restarts a given task.
@@ -200,7 +197,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during task restart. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
         Return details about a given task.
@@ -226,7 +222,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during task get. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
         Create a new log on the BotMaestro portal.
@@ -254,7 +249,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during new log. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
         """
         Creates a new log entry.
@@ -282,7 +276,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
         Fetch log information.
@@ -312,7 +305,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def delete_log(self, activity_label: str) -> model.ServerMessage:
         """
         Fetch log information.
@@ -340,7 +332,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
         Upload a new artifact into the BotMaestro portal.
@@ -379,7 +370,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during artifact posting. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def list_artifacts(self) -> List[model.Artifact]:
         """
         List all artifacts available for the organization.
@@ -409,7 +399,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                     message = 'Error during artifact listing. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
-    @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
         Retrieve an artifact from the BotMaestro portal.
@@ -438,32 +427,6 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                 except ValueError:
                     message = 'Error during artifact get. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
-
-    @ensure_access_token(invoke=True)
-    def get_execution(self, task_id: Optional[str] = None) -> model.BotExecution:
-        """
-        Fetch the BotExecution object for a given task.
-
-        Args:
-            task_id (Optional[str], optional): The task ID. Defaults to None.
-
-        Returns:
-            model.BotExecution: The BotExecution information.
-        """
-        if not self.access_token and not self.RAISE_NOT_CONNECTED:
-            return model.BotExecution("", "", "", {})
-
-        task_id = task_id or self.task_id
-        if not task_id:
-            # If we are connected (access_token) or want to raise errors when disconnected
-            # we show the error, otherwise we are working offline and just want to ignore this
-            # but we will print a warning message for good measure
-            raise ValueError("A task ID must be informed either via the parameter or the class property.")
-
-        parameters = self.get_task(task_id).parameters
-
-        execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
-        return execution
 
     def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
         """

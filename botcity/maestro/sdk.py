@@ -5,7 +5,7 @@ import urllib3
 
 from . import model
 from .impl import (BotMaestroSDKInterface, BotMaestroSDKV1, BotMaestroSDKV2,
-                   ensure_access_token)
+                   ensure_access_token, since_version)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -40,7 +40,6 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             key: The access key provided via server configuration. Available under `Dev. Environment`
 
         """
-
         if server:
             self.server = server
         self._login = login or self._login
@@ -58,10 +57,12 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
             try:
                 if req.status_code == 200:
-                    self._impl: BotMaestroSDKV2 = BotMaestroSDKV2(self.server, self._login, self._key)
+                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key)
+                    self._version = req.json()['version']
             finally:
                 if self._impl is None:
-                    self._impl: BotMaestroSDKV1 = BotMaestroSDKV1(self.server, self._login, self._key)
+                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key)
+                    self._version = "1.0.0"
         self._impl.login()
         self.access_token = self._impl.access_token
 
@@ -255,6 +256,8 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_artifact(artifact_id=artifact_id)
 
+    @since_version("2.0.0")
+    @ensure_access_token()
     def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
         """
         Creates a new artifact
@@ -269,7 +272,9 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.error(task_id, exception, screenshot, attachments, tags)
 
-    def get_credential(self, label: str, key: str):
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def get_credential(self, label: str, key: str) -> str:
         """
         Get value in key inside credentials
         Args:
@@ -281,7 +286,9 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         """
         return self._impl.get_credential(label, key)
 
-    def create_credential(self, label: str, key: str, value) -> model.ServerMessage:
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def create_credential(self, label: str, key: str, value):
         """
         Create credential
         Args:
