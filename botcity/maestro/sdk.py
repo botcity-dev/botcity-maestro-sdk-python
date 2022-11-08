@@ -6,8 +6,11 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 
 import requests
+import urllib3
 
 from . import model
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -62,6 +65,9 @@ class BotMaestroSDK:
 
     _notified_disconnect = False
     RAISE_NOT_CONNECTED = True
+    # More details about VERIFY_SSL_CERT here
+    # https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification
+    VERIFY_SSL_CERT = True
 
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -160,7 +166,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/login'
         data = {"userLogin": self._login, "key": self._key}
 
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 self.access_token = req.json()['access_token']
             else:
@@ -193,7 +199,7 @@ class BotMaestroSDK:
                 "access_token": self.access_token
                 }
 
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -226,7 +232,7 @@ class BotMaestroSDK:
 
         data = {"email": email_str, "users": users_str, "subject": subject, "body": body,
                 "type": msg_type, "group": group, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -256,7 +262,7 @@ class BotMaestroSDK:
         }
         data.update(parameters)
 
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 payload = req.json().get('payload')
                 return model.AutomationTask.from_json(payload)
@@ -289,7 +295,7 @@ class BotMaestroSDK:
 
         data = {"taskId": task_id, "finishStatus": status, "finishMessage": message,
                 "processedItems": processed_items, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -314,7 +320,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/task/restart'
 
         data = {"id": task_id, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -339,7 +345,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/task/get'
 
         data = {"id": task_id, "access_token": self.access_token}
-        with requests.get(url, params=data) as req:
+        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 payload = req.text
                 return model.AutomationTask.from_json(payload)
@@ -368,7 +374,7 @@ class BotMaestroSDK:
         cols = [asdict(c) for c in columns]
 
         data = {"activityLabel": activity_label, "columns": json.dumps(cols), "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -396,7 +402,7 @@ class BotMaestroSDK:
         data = {"logName": activity_label,
                 "columns": json.dumps(values),
                 "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -425,7 +431,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/log/read'
 
         data = {"activityLabel": activity_label, "date": date, "access_token": self.access_token}
-        with requests.get(url, params=data) as req:
+        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 # TODO: Improve the way data is returned.
                 return [entry.get('columns') for entry in json.loads(req.json()['message'])]
@@ -454,7 +460,7 @@ class BotMaestroSDK:
         url = f'{self._server}/app/api/log/delete'
 
         data = {"activityLabel": activity_label, "access_token": self.access_token}
-        with requests.post(url, data=data) as req:
+        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -493,7 +499,7 @@ class BotMaestroSDK:
             )
         }
 
-        with requests.post(url, data=data, files=files) as req:
+        with requests.post(url, data=data, files=files, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -518,7 +524,7 @@ class BotMaestroSDK:
             "access_token": self.access_token
         }
 
-        with requests.get(url, params=data) as req:
+        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 data = json.loads(req.text)
                 message = data.get("message", "")
@@ -549,7 +555,7 @@ class BotMaestroSDK:
 
         data = {"id": artifact_id, "access_token": self.access_token}
 
-        with requests.get(url, params=data) as req:
+        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code == 200:
                 h_content = req.headers['Content-Disposition']
 
