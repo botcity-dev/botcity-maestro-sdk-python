@@ -32,4 +32,4 @@ jobs:
 
       - name: Run mypy Linter
         run: |
-          mypy botcity
+          mypy --namespace-packages -p "botcity.maestro"
