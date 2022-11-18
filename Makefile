@@ -6,7 +6,7 @@ _install_prod:
 	pip install -r requirements.txt
 
 _mypy:
-	@mypy botcity/
+	@mypy --namespace-packages -p "botcity.maestro"
 
 _flake8:
 	@flake8 --show-source botcity/

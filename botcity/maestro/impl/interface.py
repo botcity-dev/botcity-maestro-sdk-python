@@ -117,7 +117,6 @@ class BotMaestroSDKInterface:
     # https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification
     VERIFY_SSL_CERT = True
 
-
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
         Main class to interact with the BotMaestro web portal.

@@ -4,8 +4,8 @@ from typing import Dict, List, Optional, Tuple
 
 import requests
 
-from .interface import BotMaestroSDKInterface, ensure_access_token
 from .. import model
+from .interface import BotMaestroSDKInterface, ensure_access_token
 
 
 class BotMaestroSDKV1(BotMaestroSDKInterface):

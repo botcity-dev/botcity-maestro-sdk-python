@@ -7,6 +7,7 @@ repos:
     rev: v0.982
     hooks:
     -   id: mypy
+        additional_dependencies: [types-requests]
 -   repo: https://github.com/PyCQA/flake8
     rev: 5.0.4
     hooks:
