@@ -113,6 +113,10 @@ class BotMaestroSDKInterface:
 
     _notified_disconnect = False
     RAISE_NOT_CONNECTED = True
+    # More details about VERIFY_SSL_CERT here
+    # https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification
+    VERIFY_SSL_CERT = True
+
 
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
