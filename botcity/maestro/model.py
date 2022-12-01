@@ -133,6 +133,7 @@ class AutomationTask:
             [AutomationTaskFinishStatus][botcity.maestro.model.AutomationTaskFinishStatus].
         finish_message: The finish message of this task.
         test: Whether or not this task was a test.
+        interrupted: Whether or not this task received an interrupt request.
     """
     id: int
     state: AutomationTaskState
@@ -148,6 +149,7 @@ class AutomationTask:
     finish_status: AutomationTaskFinishStatus
     finish_message: str
     test: bool
+    interrupted: bool
 
     def to_json(self) -> str:
         """
@@ -185,12 +187,24 @@ class AutomationTask:
         date_last_modified = data.get("dateLastModified")
         finish_status = data.get("finishStatus")
         finish_message = data.get("finishMessage")
-        test = data.get("test")
+        test = data.get("test", False)
+        interrupted = data.get("interrupted", False)
+        interrupted = False if interrupted is None else interrupted
+
         return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id,
                               input_file=input_file, agent_id=agent_id, user_creation_id=user_creation_id,
                               user_creation_name=user_creation_name, org_creation_id=org_creation_id,
                               date_creation=date_creation, date_last_modified=date_last_modified,
-                              finish_status=finish_status, finish_message=finish_message, test=test)
+                              finish_status=finish_status, finish_message=finish_message, test=test,
+                              interrupted=interrupted)
+
+    def is_interrupted(self) -> bool:
+        """Whether or not this task received an interrupt request.
+
+        Returns:
+            bool: Whether or not this task received an interrupt request.
+        """
+        return self.interrupted
 
 
 @dataclass

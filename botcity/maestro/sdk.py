@@ -1,73 +1,16 @@
-import json
-import sys
-import warnings
-from dataclasses import asdict
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import Dict, List, Optional, Tuple
 
 import requests
 import urllib3
 
 from . import model
+from .impl import (BotMaestroSDKInterface, BotMaestroSDKV1, BotMaestroSDKV2,
+                   ensure_access_token, ensure_implementation, since_version)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-F = TypeVar('F', bound=Callable[..., Any])
 
-
-def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
-    """
-    Decorator to ensure that a token is available.
-
-    Args:
-        func (callable): The function to be wrapped
-        invoke (bool): Whether or not to invoke the function anyway.
-    Returns:
-        wrapper (callable): The decorated function
-    """
-    def decorator(func: F) -> F:
-        @wraps(func)
-        def wrapper(obj, *args, **kwargs):
-            if isinstance(obj, BotMaestroSDK):
-                if obj.access_token is None:
-                    if obj.RAISE_NOT_CONNECTED:
-                        raise RuntimeError('Access Token not available. Make sure to invoke login first.')
-                    else:
-                        message = ""
-                        if not obj._notified_disconnect:
-                            obj._notified_disconnect = True
-                            message += "** WARNING BotCity Maestro is not logged in and RAISE_NOT_CONNECTED is "
-                            message += "False. Running on Offline mode. **"
-                            warnings.warn(message, stacklevel=2)
-                        message = f"Invoked '{func.__name__}'"
-                        params: List[str] = []
-                        if args:
-                            params.extend(args)
-                        if kwargs:
-                            for k, v in kwargs.items():
-                                params.append(f"{k}={v}")
-                        if params:
-                            message += ' with arguments '
-                            message += ", ".join(params)
-                        message += "."
-                        warnings.warn(message, stacklevel=2)
-                        if not invoke:
-                            return lambda *args, **kwargs: None
-            else:
-                raise NotImplementedError('ensure_token is only valid for BotMaestroSDK methods.')
-            return func(obj, *args, **kwargs)
-
-        return cast(F, wrapper)
-    return decorator
-
-
-class BotMaestroSDK:
-
-    _notified_disconnect = False
-    RAISE_NOT_CONNECTED = True
-    # More details about VERIFY_SSL_CERT here
-    # https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification
-    VERIFY_SSL_CERT = True
+class BotMaestroSDK(BotMaestroSDKInterface):
 
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -83,61 +26,22 @@ class BotMaestroSDK:
         Attributes:
             access_token (str): The access token obtained via login.
         """
-        self._server = None
-        self._login = login
-        self._key = key
-        self._access_token = None
-        self._task_id = None
+        super().__init__(server=server, login=login, key=key)
 
-        self.server = server
+    def _define_implementation(self):
+        url = f'{self._server}/api/v2/maestro/version'
 
-    @classmethod
-    def from_sys_args(cls, default_server="", default_login="", default_key=""):
-        if len(sys.argv) == 4:
-            maestro = cls()
-            server, task_id, token = sys.argv[1:4]
-            maestro.server = server
-            maestro.access_token = token
-            maestro.task_id = task_id
-        else:
-            maestro = cls(
-                server=default_server,
-                login=default_login,
-                key=default_key
-            )
-            if default_server:
-                maestro.login()
-        return maestro
-
-    @property
-    def server(self):
-        """The server address"""
-        return self._server
-
-    @server.setter
-    def server(self, server):
-        # Remove additional end /
-        if server and server[-1] == "/":
-            server = server[:-1]
-        self._server = server
-
-    @property
-    def access_token(self):
-        """The access token"""
-        return self._access_token
-
-    @access_token.setter
-    def access_token(self, token):
-        self._access_token = token
-
-    @property
-    def task_id(self):
-        """The Current Task ID"""
-        return self._task_id
-
-    @task_id.setter
-    def task_id(self, task_id):
-        self._task_id = task_id
+        with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
+            try:
+                if req.status_code == 200:
+                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+                    self._version = req.json()['version']
+            finally:
+                if self._impl is None:
+                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
+                    self._version = "1.0.0"
+        self._impl.access_token = self.access_token
+        self._impl._login = self._login
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
@@ -163,21 +67,11 @@ class BotMaestroSDK:
             raise ValueError('Key is required.')
         self.logoff()
 
-        url = f'{self._server}/app/api/login'
-        data = {"userLogin": self._login, "key": self._key}
+        self._define_implementation()
+        self._impl.login()
+        self.access_token = self._impl.access_token
 
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                self.access_token = req.json()['access_token']
-            else:
-                raise ValueError('Error during login. Server returned %d. %s' % (req.status_code, req.text))
-
-    def logoff(self):
-        """
-        Revoke the access token used to communicate with the BotMaestro portal.
-        """
-        self.access_token = None
-
+    @ensure_implementation()
     @ensure_access_token()
     def alert(self, task_id: str, title: str, message: str, alert_type: model.AlertType) -> model.ServerMessage:
         """
@@ -192,19 +86,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/alert/send'
+        return self._impl.alert(task_id=task_id, title=title, message=message, alert_type=alert_type)
 
-        data = {"taskId": task_id, "title": title,
-                "message": message, "type": alert_type,
-                "access_token": self.access_token
-                }
-
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                raise ValueError('Error during alert. %s', req.text)
-
+    @ensure_implementation()
     @ensure_access_token()
     def message(self, email: List[str], users: List[str], subject: str, body: str,
                 msg_type: model.MessageType, group: Optional[str] = None) -> model.ServerMessage:
@@ -222,25 +106,10 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/message/send'
+        return self._impl.message(email=email, users=users, subject=subject, body=body, msg_type=msg_type,
+                                  group=group)
 
-        if not group:
-            group = ""
-
-        email_str = ",".join(email)
-        users_str = ",".join(users)
-
-        data = {"email": email_str, "users": users_str, "subject": subject, "body": body,
-                "type": msg_type, "group": group, "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                raise ValueError(
-                    'Error during message. Server returned %d. %s' %
-                    (req.status_code, req.json().get('message', ''))
-                )
-
+    @ensure_implementation()
     @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
                     test: bool = False) -> model.AutomationTask:
@@ -255,25 +124,9 @@ class BotMaestroSDK:
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/create'
+        return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test)
 
-        data = {
-            "activityLabel": activity_label, "taskForTest": str(test).lower(), "access_token": self.access_token
-        }
-        data.update(parameters)
-
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                payload = req.json().get('payload')
-                return model.AutomationTask.from_json(payload)
-            else:
-                try:
-                    message = 'Error during task create. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during task create. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
                     message: str = "") -> model.ServerMessage:
@@ -289,23 +142,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/finish'
+        return self._impl.finish_task(task_id=task_id, status=status, message=message)
 
-        processed_items = "1"  # TODO: Check this constant value here.
-
-        data = {"taskId": task_id, "finishStatus": status, "finishMessage": message,
-                "processedItems": processed_items, "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during task finish. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during task finish. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def restart_task(self, task_id: str) -> model.ServerMessage:
         """
@@ -317,20 +156,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/task/restart'
+        return self._impl.restart_task(task_id=task_id)
 
-        data = {"id": task_id, "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during task restart. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during task restart. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def get_task(self, task_id: str) -> model.AutomationTask:
         """
@@ -342,21 +170,24 @@ class BotMaestroSDK:
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        url = f'{self._server}/app/api/task/get'
+        return self._impl.get_task(task_id=task_id)
 
-        data = {"id": task_id, "access_token": self.access_token}
-        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                payload = req.text
-                return model.AutomationTask.from_json(payload)
-            else:
-                try:
-                    message = 'Error during task get. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during task get. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def interrupt_task(self, task_id: str) -> model.ServerMessage:
+        """
+        Request the interruption of a given task.
 
+        Args:
+            task_id (str): The task unique identifier.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        return self._impl.interrupt_task(task_id=task_id)
+
+    @ensure_implementation()
     @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
@@ -369,22 +200,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/log/create'
+        return self._impl.new_log(activity_label=activity_label, columns=columns)
 
-        cols = [asdict(c) for c in columns]
-
-        data = {"activityLabel": activity_label, "columns": json.dumps(cols), "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during new log. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during new log. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def new_log_entry(self, activity_label: str, values: Dict[str, object]) -> model.ServerMessage:
         """
@@ -397,22 +215,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newLogEntry'
+        return self._impl.new_log_entry(activity_label=activity_label, values=values)
 
-        data = {"logName": activity_label,
-                "columns": json.dumps(values),
-                "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during new log entry. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during new log entry. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def get_log(self, activity_label: str, date: Optional[str] = "") -> List[Dict[str, object]]:
         """
@@ -426,23 +231,9 @@ class BotMaestroSDK:
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        # date  a partir desta data
-        # date em branco eh tudo
-        url = f'{self._server}/app/api/log/read'
+        return self._impl.get_log(activity_label=activity_label, date=date)
 
-        data = {"activityLabel": activity_label, "date": date, "access_token": self.access_token}
-        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                # TODO: Improve the way data is returned.
-                return [entry.get('columns') for entry in json.loads(req.json()['message'])]
-            else:
-                try:
-                    message = 'Error during log read. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during log read. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def delete_log(self, activity_label: str) -> model.ServerMessage:
         """
@@ -455,22 +246,9 @@ class BotMaestroSDK:
             Log entry list. Each element in the list is a dictionary in which keys are Column names and values are
             the column value.
         """
-        # date  a partir desta data
-        # date em branco eh tudo
-        url = f'{self._server}/app/api/log/delete'
+        return self._impl.delete_log(activity_label=activity_label)
 
-        data = {"activityLabel": activity_label, "access_token": self.access_token}
-        with requests.post(url, data=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during log delete. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during log delete. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def post_artifact(self, task_id: int, artifact_name: str, filepath: str) -> model.ServerMessage:
         """
@@ -484,32 +262,9 @@ class BotMaestroSDK:
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._server}/app/api/newArtifact'
+        return self._impl.post_artifact(task_id=task_id, artifact_name=artifact_name, filepath=filepath)
 
-        data = {
-            "taskId": task_id,
-            "name": artifact_name,
-            "access_token": self.access_token
-        }
-
-        files = {
-            'body': (
-                artifact_name, open(filepath, 'rb'),
-                'application/octet-stream', {'Expires': '0'}
-            )
-        }
-
-        with requests.post(url, data=data, files=files, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                return model.ServerMessage.from_json(req.text)
-            else:
-                try:
-                    message = 'Error during artifact posting. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during artifact posting. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def list_artifacts(self) -> List[model.Artifact]:
         """
@@ -518,28 +273,9 @@ class BotMaestroSDK:
         Returns:
             List of artifacts. See [Artifact][botcity.maestro.model.Artifact]
         """
-        url = f'{self._server}/app/api/artifact/list'
+        return self._impl.list_artifacts()
 
-        data = {
-            "access_token": self.access_token
-        }
-
-        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                data = json.loads(req.text)
-                message = data.get("message", "")
-                if not message:
-                    return []
-
-                return [model.Artifact.from_dict(a) for a in json.loads(message)]
-            else:
-                try:
-                    message = 'Error during artifact listing. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during artifact listing. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
+    @ensure_implementation()
     @ensure_access_token()
     def get_artifact(self, artifact_id: int) -> Tuple[str, bytes]:
         """
@@ -551,47 +287,49 @@ class BotMaestroSDK:
         Returns:
             Tuple containing the artifact name and an array of bytes which are the binary content of the artifact.
         """
-        url = f'{self._server}/app/api/artifact/get'
+        return self._impl.get_artifact(artifact_id=artifact_id)
 
-        data = {"id": artifact_id, "access_token": self.access_token}
-
-        with requests.get(url, params=data, verify=self.VERIFY_SSL_CERT) as req:
-            if req.status_code == 200:
-                h_content = req.headers['Content-Disposition']
-
-                filename = h_content[h_content.rfind('=') + 2:-1]
-                filename = filename[:filename.rfind('_')] + filename[filename.rfind('.'):]
-                return filename, req.content
-            else:
-                try:
-                    message = 'Error during artifact get. Server returned %d. %s' % (
-                        req.status_code, req.json().get('message', ''))
-                except ValueError:
-                    message = 'Error during artifact get. Server returned %d. %s' % (req.status_code, req.text)
-                raise ValueError(message)
-
-    @ensure_access_token(invoke=True)
-    def get_execution(self, task_id: Optional[str] = None) -> model.BotExecution:
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
         """
-        Fetch the BotExecution object for a given task.
+        Creates a new artifact
 
         Args:
-            task_id (Optional[str], optional): The task ID. Defaults to None.
+            task_id: The task unique identifier.
+            name: The name of the artifact to be displayed on the portal.
+            filename: The file to be uploaded.
 
         Returns:
-            model.BotExecution: The BotExecution information.
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        if not self.access_token and not self.RAISE_NOT_CONNECTED:
-            return model.BotExecution("", "", "", {})
+        return self._impl.error(task_id, exception, screenshot, attachments, tags)
 
-        task_id = task_id or self.task_id
-        if not task_id:
-            # If we are connected (access_token) or want to raise errors when disconnected
-            # we show the error, otherwise we are working offline and just want to ignore this
-            # but we will print a warning message for good measure
-            raise ValueError("A task ID must be informed either via the parameter or the class property.")
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def get_credential(self, label: str, key: str) -> str:
+        """
+        Get value in key inside credentials
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
 
-        parameters = self.get_task(task_id).parameters
+        Returns:
+            Key value that was requested
+        """
+        return self._impl.get_credential(label, key)
 
-        execution = model.BotExecution(self.server, task_id, self.access_token, parameters)
-        return execution
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def create_credential(self, label: str, key: str, value):
+        """
+        Create credential
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            value: Credential value
+        """
+        return self._impl.create_credential(label, key, value)
