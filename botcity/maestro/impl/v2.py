@@ -192,10 +192,10 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
-        url = f'{self._sdk._server}/app/api/task/restart'
-
-        data = {"id": task_id}
-        with requests.post(url, data=data) as req:
+        url = f'{self._sdk._server}/api/v2/task/{task_id}'
+        data = {"state": "START"}
+        headers = self._headers()
+        with requests.post(url, json=data, headers=headers) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -228,6 +228,30 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                         req.status_code, req.json().get('message', ''))
                 except ValueError:
                     message = 'Error during task get. Server returned %d. %s' % (req.status_code, req.text)
+                raise ValueError(message)
+
+    def interrupt_task(self, task_id: str) -> model.ServerMessage:
+        """
+        Request the interruption of a given task.
+
+        Args:
+            task_id (str): The task unique identifier.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        url = f'{self._sdk._server}/api/v2/task/{task_id}'
+        data = {"interrupted": True}
+        headers = self._headers()
+        with requests.post(url, json=data, headers=headers) as req:
+            if req.ok:
+                return model.ServerMessage.from_json(req.text)
+            else:
+                try:
+                    message = 'Error during task finish. Server returned %d. %s' % (
+                        req.status_code, req.json().get('message', ''))
+                except ValueError:
+                    message = 'Error during task finish. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:

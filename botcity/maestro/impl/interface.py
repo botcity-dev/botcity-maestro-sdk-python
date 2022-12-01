@@ -317,6 +317,18 @@ class BotMaestroSDKInterface:
         """
         raise NotImplementedError
 
+    def interrupt_task(self, task_id: str) -> model.ServerMessage:
+        """
+        Request the interruption of a given task.
+
+        Args:
+            task_id (str): The task unique identifier.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        raise NotImplementedError
+
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
         Create a new log on the BotMaestro portal.

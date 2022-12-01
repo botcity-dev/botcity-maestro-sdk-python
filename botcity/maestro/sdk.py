@@ -173,6 +173,21 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         return self._impl.get_task(task_id=task_id)
 
     @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def interrupt_task(self, task_id: str) -> model.ServerMessage:
+        """
+        Request the interruption of a given task.
+
+        Args:
+            task_id (str): The task unique identifier.
+
+        Returns:
+            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        """
+        return self._impl.interrupt_task(task_id=task_id)
+
+    @ensure_implementation()
     @ensure_access_token()
     def new_log(self, activity_label: str, columns: List[model.Column]) -> model.ServerMessage:
         """
