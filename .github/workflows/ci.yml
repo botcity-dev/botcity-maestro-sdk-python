@@ -2,7 +2,8 @@ name: Tests
 
 on:
   push:
-  pull_request:
+  pull_request_target:
+    branches:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,6 +28,10 @@ jobs:
         python-version: ["3.7", "3.11"]
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        if: github.event_name == "pull_request"
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
