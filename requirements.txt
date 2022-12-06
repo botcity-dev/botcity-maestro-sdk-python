@@ -2,3 +2,4 @@ requests
 requests_toolbelt
 packaging
 importlib-metadata
+distro

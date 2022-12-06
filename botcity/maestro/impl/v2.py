@@ -8,6 +8,7 @@ from io import IOBase, StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import distro
 import importlib_metadata
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -579,7 +580,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
         os_version = platform.version()
         if platform.system() == "Linux":
-            os_version = " ".join(platform.linux_distribution())
+            os_version = " ".join(distro.linux_distribution())
         elif platform.system() == "Darwin":
             os_version = platform.mac_ver()[0]
 
