@@ -21,7 +21,7 @@ def test_create_log(maestro: BotMaestroSDK):
     )
 
 
-def test_new_log_entry(maestro: BotMaestroSDK, activity_label_to_log: str):
+def test_new_log_entry(maestro: BotMaestroSDK):
     maestro.new_log_entry(
         activity_label=conftest.ACTIVITY_LABEL_TO_LOG,
         values={
@@ -41,5 +41,5 @@ def test_get_log(maestro: BotMaestroSDK):
 
 
 @pytest.mark.depends(on=["test_create_log", "test_get_log"])
-def test_delete_log(maestro: BotMaestroSDK, activity_label: str):
-    maestro.delete_log(activity_label=activity_label)
+def test_delete_log(maestro: BotMaestroSDK):
+    maestro.delete_log(activity_label=conftest.ACTIVITY_LABEL_TO_LOG)
