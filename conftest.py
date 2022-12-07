@@ -16,7 +16,7 @@ KEY = os.getenv("BOTCITY_KEY")
 
 @pytest.fixture
 def path_screenshot() -> str:
-    return os.path.join(os.path.abspath(''), 'tests', 'screenshot.png')
+    return os.path.join('tests', 'screenshot.png')
 
 
 @pytest.fixture

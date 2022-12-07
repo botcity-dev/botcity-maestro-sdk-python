@@ -574,7 +574,10 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """Generates a dictionarty with useful tags about the system for the error method
         """
         tags = dict()
-        tags["user_name"] = os.getlogin()
+        try:
+            tags["user_name"] = os.getlogin()
+        except Exception:
+            tags["user_name"] = ""
         tags["host_name"] = platform.node()
         tags["os_name"] = platform.system()
 
