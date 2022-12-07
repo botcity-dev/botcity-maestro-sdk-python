@@ -13,9 +13,9 @@ columns = [
 ]
 
 
-def test_create_log(maestro: BotMaestroSDK, activity_label: str):
+def test_create_log(maestro: BotMaestroSDK, activity_label_to_log: str):
     maestro.new_log(
-        activity_label=activity_label,
+        activity_label=activity_label_to_log,
         columns=columns
     )
 

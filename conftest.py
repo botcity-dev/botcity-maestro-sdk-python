@@ -75,3 +75,8 @@ def task(maestro: BotMaestroSDK, activity_label: str):
 @pytest.fixture(scope="session")
 def activity_label():
     return 'TestCI'
+
+
+@pytest.fixture(scope="session")
+def activity_label_to_log():
+    return f'TestCI-{uuid4()}'
