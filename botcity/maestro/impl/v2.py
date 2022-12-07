@@ -8,6 +8,7 @@ from io import IOBase, StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import distro
 import importlib_metadata
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -573,13 +574,16 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """Generates a dictionarty with useful tags about the system for the error method
         """
         tags = dict()
-        tags["user_name"] = os.getlogin()
+        try:
+            tags["user_name"] = os.getlogin()
+        except Exception:
+            tags["user_name"] = ""
         tags["host_name"] = platform.node()
         tags["os_name"] = platform.system()
 
         os_version = platform.version()
         if platform.system() == "Linux":
-            os_version = " ".join(platform.linux_distribution())
+            os_version = " ".join(distro.linux_distribution())
         elif platform.system() == "Darwin":
             os_version = platform.mac_ver()[0]
 

@@ -4,6 +4,16 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BOTCITY_SERVER: ${{ secrets.BOTCITY_SERVER }}
+  BOTCITY_LOGIN: ${{ secrets.BOTCITY_LOGIN }}
+  BOTCITY_KEY: ${{ secrets.BOTCITY_KEY }}
+
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -11,11 +21,18 @@ jobs:
         run:
           shell: bash
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: [3.7]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.7", "3.11"]
     steps:
       - uses: actions/checkout@v2
+        if: ${{ github.event_name == 'push' }}
+
+      - uses: actions/checkout@v2
+        if:  ${{ github.event_name == 'pull_request' }}
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -31,5 +48,9 @@ jobs:
           pip install .
 
       - name: Run Tests
+        env:
+          BOTCITY_SERVER: ${{ secrets.BOTCITY_SERVER }}
+          BOTCITY_LOGIN: ${{ secrets.BOTCITY_LOGIN }}
+          BOTCITY_KEY: ${{ secrets.BOTCITY_KEY }}
         run: |
-          python run_tests.py
+          pytest -v -vrxs
