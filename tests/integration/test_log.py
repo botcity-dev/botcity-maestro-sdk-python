@@ -20,9 +20,9 @@ def test_create_log(maestro: BotMaestroSDK, activity_label_to_log: str):
     )
 
 
-def test_new_log_entry(maestro: BotMaestroSDK, activity_label: str):
+def test_new_log_entry(maestro: BotMaestroSDK, activity_label_to_log: str):
     maestro.new_log_entry(
-        activity_label=activity_label,
+        activity_label=activity_label_to_log,
         values={
             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M"),
             "records": "10",
@@ -32,10 +32,10 @@ def test_new_log_entry(maestro: BotMaestroSDK, activity_label: str):
 
 
 @pytest.mark.depends(name="test_new_log_entry")
-def test_get_log(maestro: BotMaestroSDK, activity_label: str):
+def test_get_log(maestro: BotMaestroSDK, activity_label_to_log: str):
     instant = (datetime.datetime.now() - datetime.timedelta(days=30))
     date = instant.strftime("%d/%m/%Y")
-    data = maestro.get_log(activity_label=activity_label, date=date)
+    data = maestro.get_log(activity_label=activity_label_to_log, date=date)
     assert len(data) > 0
 
 
