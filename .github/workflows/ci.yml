@@ -46,5 +46,9 @@ jobs:
           pip install .
 
       - name: Run Tests
+        env:
+          BOTCITY_SERVER: ${{ secrets.BOTCITY_SERVER }}
+          BOTCITY_LOGIN: ${{ secrets.BOTCITY_LOGIN }}
+          BOTCITY_KEY: ${{ secrets.BOTCITY_KEY }}
         run: |
           pytest -v -vrxs
