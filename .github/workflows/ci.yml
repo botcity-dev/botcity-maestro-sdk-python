@@ -27,6 +27,8 @@ jobs:
         python-version: ["3.7", "3.11"]
     steps:
       - uses: actions/checkout@v2
+        if: ${{ github.event_name == 'push' }}
+
       - uses: actions/checkout@v2
         if:  ${{ github.event_name == 'pull_request_target' }}
         with:
