@@ -12,6 +12,7 @@ from botcity.maestro import BotMaestroSDK
 SERVER = os.getenv("BOTCITY_SERVER")
 LOGIN = os.getenv("BOTCITY_LOGIN")
 KEY = os.getenv("BOTCITY_KEY")
+ACTIVITY_LABEL_TO_LOG = f'TestCI-{uuid4()}'
 
 
 @pytest.fixture
@@ -75,8 +76,3 @@ def task(maestro: BotMaestroSDK, activity_label: str):
 @pytest.fixture(scope="session")
 def activity_label():
     return 'TestCI'
-
-
-@pytest.fixture(scope="session")
-def activity_label_to_log():
-    return f'TestCI-{uuid4()}'

@@ -4,6 +4,7 @@ import datetime
 
 import pytest
 
+import conftest
 from botcity.maestro import BotMaestroSDK, Column
 
 columns = [
@@ -13,16 +14,16 @@ columns = [
 ]
 
 
-def test_create_log(maestro: BotMaestroSDK, activity_label_to_log: str):
+def test_create_log(maestro: BotMaestroSDK):
     maestro.new_log(
-        activity_label=activity_label_to_log,
+        activity_label=conftest.ACTIVITY_LABEL_TO_LOG,
         columns=columns
     )
 
 
 def test_new_log_entry(maestro: BotMaestroSDK, activity_label_to_log: str):
     maestro.new_log_entry(
-        activity_label=activity_label_to_log,
+        activity_label=conftest.ACTIVITY_LABEL_TO_LOG,
         values={
             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M"),
             "records": "10",
@@ -32,10 +33,10 @@ def test_new_log_entry(maestro: BotMaestroSDK, activity_label_to_log: str):
 
 
 @pytest.mark.depends(name="test_new_log_entry")
-def test_get_log(maestro: BotMaestroSDK, activity_label_to_log: str):
+def test_get_log(maestro: BotMaestroSDK):
     instant = (datetime.datetime.now() - datetime.timedelta(days=30))
     date = instant.strftime("%d/%m/%Y")
-    data = maestro.get_log(activity_label=activity_label_to_log, date=date)
+    data = maestro.get_log(activity_label=conftest.ACTIVITY_LABEL_TO_LOG, date=date)
     assert len(data) > 0
 
 
