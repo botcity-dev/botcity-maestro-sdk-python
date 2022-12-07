@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/checkout@v2
-        if: github.event_name == pull_request_target
+        if:  ${{ github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR
 
