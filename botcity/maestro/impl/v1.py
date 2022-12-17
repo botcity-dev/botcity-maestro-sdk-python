@@ -432,16 +432,20 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                 raise ValueError(message)
 
     def error(self, task_id: int, exception: Exception, screenshot=None, attachments=None, tags=None):
-        """
-        Creates a new artifact
+        """Create a new Error entry.
 
         Args:
-            task_id: The task unique identifier.
-            name: The name of the artifact to be displayed on the portal.
-            filename: The file to be uploaded.
+            task_id (int): The task unique identifier.
+            exception (Exception): The exception object.
+            screenshot (Optional[str], optional): File path for a screenshot to be attached
+                to the error. Defaults to None.
+            attachments (Optional[List[str]], optional): Additional files to be sent along
+                with the error entry. Defaults to None.
+            tags (Optional[Dict[str, str]], optional): Dictionary with tags to be associated
+                with the error entry. Defaults to None.
 
-        Returns:
-            Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
+        Raises:
+            ValueError: If the request fails, a ValueError exception is raised.
         """
         raise NotImplementedError
 
