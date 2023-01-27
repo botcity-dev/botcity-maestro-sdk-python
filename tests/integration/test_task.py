@@ -1,7 +1,5 @@
 # type: ignore
 
-import pytest
-
 from botcity.maestro import (AutomationTask, AutomationTaskFinishStatus,
                              BotMaestroSDK)
 
@@ -22,8 +20,7 @@ def test_get_task(maestro: BotMaestroSDK, task: AutomationTask):
 
 
 def test_interrupting_task(maestro: BotMaestroSDK, task: AutomationTask):
-    with pytest.raises(ValueError):
-        maestro.interrupt_task(task_id=str(task.id))
+    maestro.interrupt_task(task_id=str(task.id))
 
 
 def test_finish_task_to_success(maestro: BotMaestroSDK, task: AutomationTask):

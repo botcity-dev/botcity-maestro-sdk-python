@@ -62,7 +62,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         data = {"login": self._sdk.organization, "key": self._sdk._key}
         headers = {'Content-Type': 'application/json'}
 
-        with requests.post(url, data=json.dumps(data), headers=headers) as req:
+        with requests.post(url, data=json.dumps(data), headers=headers, timeout=self.timeout) as req:
             if req.ok:
                 self.access_token = req.json()['accessToken']
             else:
@@ -86,7 +86,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         data = {"taskId": task_id, "title": title,
                 "message": message, "type": alert_type}
 
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -116,7 +116,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
         data = {"emails": email, "logins": users, "subject": subject, "body": body,
                 "type": msg_type, "group": group}
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.status_code != 200:
                 raise ValueError(
                     'Error during message. Server returned %d. %s' %
@@ -143,7 +143,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             "activityLabel": activity_label, "test": test, "parameters": parameters
         }
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
             if req.ok:
                 return model.AutomationTask.from_json(req.text)
             else:
@@ -172,7 +172,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         data = {"finishStatus": status, "finishMessage": message,
                 "state": "FINISHED"}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -196,7 +196,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         url = f'{self._sdk._server}/api/v2/task/{task_id}'
         data = {"state": "START"}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -219,7 +219,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/task/{task_id}'
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 payload = req.text
                 return model.AutomationTask.from_json(payload)
@@ -244,7 +244,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         url = f'{self._sdk._server}/api/v2/task/{task_id}'
         data = {"interrupted": True}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -271,7 +271,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         cols = [asdict(c) for c in columns]
 
         data = {"activityLabel": activity_label, "columns": cols, 'organizationLabel': self._sdk.organization}
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -295,7 +295,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/log/{activity_label}/entry'
 
-        with requests.post(url, json=values, headers=self._headers()) as req:
+        with requests.post(url, json=values, headers=self._headers(), timeout=self.timeout) as req:
             if req.status_code != 200:
                 try:
                     message = 'Error during new log entry. Server returned %d. %s' % (
@@ -324,7 +324,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         if date:
             days = (datetime.datetime.now()-datetime.datetime.strptime(date, "%d/%m/%Y")).days + 1
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 log = req.json()
                 columns = log.get('columns')
@@ -334,7 +334,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 url = f'{self._sdk._server}/api/v2/log/{activity_label}/entry-list'
 
                 data = {"days": days}
-                with requests.get(url, params=data, headers=self._headers()) as entry_req:
+                with requests.get(url, params=data, headers=self._headers(), timeout=self.timeout) as entry_req:
                     if entry_req.ok:
                         log_data = []
                         for en in entry_req.json():
@@ -375,7 +375,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         # date em branco eh tudo
         url = f'{self._sdk._server}/api/v2/log/{activity_label}'
 
-        with requests.delete(url, headers=self._headers()) as req:
+        with requests.delete(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.status_code != 200:
                 try:
                     message = 'Error during log delete. Server returned %d. %s' % (
@@ -406,7 +406,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 fields={'file': (artifact_name, f)}
             )
             headers = {**self._headers(), 'Content-Type': data.content_type}
-            with requests.post(url, data=data, headers=headers) as req:
+            with requests.post(url, data=data, headers=headers, timeout=self.timeout) as req:
                 if req.ok:
                     return artifact_id
                 else:
@@ -432,7 +432,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/artifact'
         data = {'taskId': task_id, 'name': name, 'filename': filename}
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -452,13 +452,13 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/artifact?size=5&page=0&sort=dateCreation,desc&days={days}'
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 content = req.json()['content']
                 response = [model.Artifact.from_dict(a) for a in content]
                 for page in range(1, req.json()['totalPages']):
                     url = f'{self._sdk._server}/api/v2/artifact?size=5&page={page}&sort=dateCreation,desc&days={days}'
-                    with requests.get(url, headers=self._headers()) as req:
+                    with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
                         content = req.json()['content']
                         response.extend([model.Artifact.from_dict(a) for a in content])
                 return response
@@ -482,13 +482,13 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/artifact/{artifact_id}'
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 payload = req.json()
                 filename = payload['fileName']
 
                 url = f'{self.server}/api/v2/artifact/{artifact_id}/file'
-                with requests.get(url, headers=self._headers()) as req_file:
+                with requests.get(url, headers=self._headers(), timeout=self.timeout) as req_file:
                     file_content = req_file.content
 
                 return filename, file_content
@@ -531,7 +531,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 'stackTrace': trace, 'language': 'PYTHON', 'tags': tags}
 
         response = None
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.status_code == 201:
                 response = req.json()
             else:
@@ -612,7 +612,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             headers = self._headers()
             headers['Content-Type'] = data_screenshot.content_type
 
-            with requests.post(url_screenshot, data=data_screenshot, headers=headers) as req:
+            with requests.post(url_screenshot, data=data_screenshot, headers=headers, timeout=self.timeout) as req:
                 if not req.ok:
                     try:
                         message = 'Error during new log entry. Server returned %d. %s' % (
@@ -638,7 +638,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         )
         headers = self._headers()
         headers['Content-Type'] = file.content_type
-        with requests.post(url_attachments, data=file, headers=headers) as req:
+        with requests.post(url_attachments, data=file, headers=headers, timeout=self.timeout) as req:
             if not req.ok:
                 try:
                     message = 'Error during new log entry. Server returned %d. %s' % (
@@ -660,7 +660,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/credential/{label}/key/{key}'
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return req.text
             else:
@@ -692,7 +692,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             'value': value
         }
         url = f'{self._sdk._server}/api/v2/credential/{label}/key'
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if not req.ok:
                 req.raise_for_status()
 
@@ -706,7 +706,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/credential/{label}'
 
-        with requests.get(url, headers=self._headers()) as req:
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -721,7 +721,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         }
         url = f'{self._sdk._server}/api/v2/credential'
 
-        with requests.post(url, json=data, headers=self._headers()) as req:
+        with requests.post(url, json=data, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
