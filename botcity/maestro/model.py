@@ -134,6 +134,7 @@ class AutomationTask:
         finish_message: The finish message of this task.
         test: Whether or not this task was a test.
         interrupted: Whether or not this task received an interrupt request.
+        machine_id: Identifier of the machine that performed the automation.
     """
     id: int
     state: AutomationTaskState
@@ -150,6 +151,7 @@ class AutomationTask:
     finish_message: str
     test: bool
     interrupted: bool
+    machine_id: str
 
     def to_json(self) -> str:
         """
@@ -187,6 +189,7 @@ class AutomationTask:
         date_last_modified = data.get("dateLastModified")
         finish_status = data.get("finishStatus")
         finish_message = data.get("finishMessage")
+        machine_id = data.get("machineId")
         test = data.get("test", False)
         interrupted = data.get("interrupted", False)
         interrupted = False if interrupted is None else interrupted
@@ -196,7 +199,7 @@ class AutomationTask:
                               user_creation_name=user_creation_name, org_creation_id=org_creation_id,
                               date_creation=date_creation, date_last_modified=date_last_modified,
                               finish_status=finish_status, finish_message=finish_message, test=test,
-                              interrupted=interrupted)
+                              interrupted=interrupted, machine_id=machine_id)
 
     def is_interrupted(self) -> bool:
         """Whether or not this task received an interrupt request.
@@ -227,6 +230,7 @@ class Artifact:
     id: int
     type: str
     task_id: int
+    task_name: str
     name: str
     filename: str
     storage_filename: str
@@ -280,11 +284,12 @@ class Artifact:
         organization = data.get("organizationId", None)
         user = data.get("user", None)
         date_creation = data.get("dateCreation", None)
+        task_name = data.get("taskName", None)
 
         return Artifact(
             id=uid, type=tp, task_id=task_id, name=name, filename=filename,
             storage_filename=storage_filename, storage_filepath=storage_filepath,
-            organization=organization, user=user, date_creation=date_creation
+            organization=organization, user=user, date_creation=date_creation, task_name=task_name
         )
 
 
