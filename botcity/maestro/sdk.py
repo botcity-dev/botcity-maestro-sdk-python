@@ -29,19 +29,27 @@ class BotMaestroSDK(BotMaestroSDKInterface):
         super().__init__(server=server, login=login, key=key)
 
     def _define_implementation(self):
-        url = f'{self._server}/api/v2/maestro/version'
+        try:
+            url = f'{self._server}/api/v2/maestro/version'
 
-        with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
-            try:
-                if req.status_code == 200:
-                    self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
-                    self._version = req.json()['version']
-            finally:
-                if self._impl is None:
-                    self._impl = BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
-                    self._version = "1.0.0"
-        self._impl.access_token = self.access_token
-        self._impl._login = self._login
+            with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
+                try:
+                    if req.status_code == 200:
+                        self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+                        self._version = req.json()['version']
+                finally:
+                    if self._impl is None:
+                        self._impl = BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
+                        self._version = "1.0.0"
+            self._impl.access_token = self.access_token
+            self._impl._login = self._login
+        except Exception as ex:
+            if self.RAISE_NOT_CONNECTED:
+                raise ex
+            self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+            self._version = "999.0.0"
+            self._impl.access_token = self.access_token
+            self._impl._login = self._login
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """

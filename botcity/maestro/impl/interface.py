@@ -37,7 +37,8 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
                         message = f"Invoked '{func.__name__}'"
                         params: List[str] = []
                         if args:
-                            params.extend(args)
+                            for ar in args:
+                                params.append(str(ar))
                         if kwargs:
                             for k, v in kwargs.items():
                                 params.append(f"{k}={v}")
@@ -135,7 +136,7 @@ class BotMaestroSDKInterface:
         self._login = login
         self._key = key
         self._access_token = None
-        self._task_id = None
+        self._task_id = 0
         self._impl: BotMaestroSDKInterface = None  # type: ignore
         self._version = None
         self.timeout = 30.0
@@ -429,10 +430,11 @@ class BotMaestroSDKInterface:
         Returns:
             model.BotExecution: The BotExecution information.
         """
-        if not self.access_token and not self.RAISE_NOT_CONNECTED:
-            return model.BotExecution("", "", "", {})
-
         task_id = task_id or self.task_id
+
+        if not self.access_token and not self.RAISE_NOT_CONNECTED:
+            return model.BotExecution("", task_id, "", {})
+
         if not task_id:
             # If we are connected (access_token) or want to raise errors when disconnected
             # we show the error, otherwise we are working offline and just want to ignore this
