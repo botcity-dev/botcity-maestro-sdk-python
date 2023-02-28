@@ -122,7 +122,8 @@ class AutomationTask:
         state: The task state. See [AutomationTaskState][botcity.maestro.model.AutomationTaskState].
         parameters: Dictionary with parameters and values for this task.
         input_file: The input file for this task.
-        activity_id: Identifier of the activity.
+        activity_id: Identifier of the automation. (Deprecated)
+        activity_label: Automation label identifier.
         agent_id:  Identifier of the agent which created the task.
         user_creation_id: Identifier of the user which created the task.
         user_creation_name: Name of the user which created the task.
@@ -134,6 +135,7 @@ class AutomationTask:
         finish_message: The finish message of this task.
         test: Whether or not this task was a test.
         interrupted: Whether or not this task received an interrupt request.
+        killed: Whether or not this task received a termination request.
         machine_id: Identifier of the machine that performed the automation.
     """
     id: int
@@ -141,6 +143,7 @@ class AutomationTask:
     parameters: Dict[str, object]
     input_file: 'Artifact'
     activity_id: int
+    activity_label: str
     agent_id: int
     user_creation_id: int
     user_creation_name: str
@@ -151,6 +154,7 @@ class AutomationTask:
     finish_message: str
     test: bool
     interrupted: bool
+    killed: bool
     machine_id: str
 
     def to_json(self) -> str:
@@ -178,6 +182,7 @@ class AutomationTask:
         state = data.get("state")
         parameters = data.get("parameters")
         activity_id = data.get("activityId")
+        activity_label = data.get("activityLabel")
         input_file = data.get("inputFile")
         if input_file:
             input_file = Artifact.from_dict(input_file)
@@ -193,13 +198,15 @@ class AutomationTask:
         test = data.get("test", False)
         interrupted = data.get("interrupted", False)
         interrupted = False if interrupted is None else interrupted
+        killed = data.get("killed", False)
+        killed = False if killed is None else killed
 
-        return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id,
+        return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id, activity_label=activity_label,
                               input_file=input_file, agent_id=agent_id, user_creation_id=user_creation_id,
                               user_creation_name=user_creation_name, org_creation_id=org_creation_id,
                               date_creation=date_creation, date_last_modified=date_last_modified,
                               finish_status=finish_status, finish_message=finish_message, test=test,
-                              interrupted=interrupted, machine_id=machine_id)
+                              interrupted=interrupted, machine_id=machine_id, killed=killed)
 
     def is_interrupted(self) -> bool:
         """Whether or not this task received an interrupt request.
