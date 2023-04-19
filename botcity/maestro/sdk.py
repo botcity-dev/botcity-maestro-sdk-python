@@ -135,7 +135,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
         return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test,
-                                      **{'min_execution_date': min_execution_date, 'priority': priority})
+                                      min_execution_date=min_execution_date, priority=priority)
 
     @ensure_implementation()
     @ensure_access_token()
