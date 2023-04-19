@@ -201,7 +201,8 @@ class AutomationTask:
         killed = data.get("killed", False)
         killed = False if killed is None else killed
 
-        return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id, activity_label=activity_label,
+        return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id,
+                              activity_label=activity_label,
                               input_file=input_file, agent_id=agent_id, user_creation_id=user_creation_id,
                               user_creation_name=user_creation_name, org_creation_id=org_creation_id,
                               date_creation=date_creation, date_last_modified=date_last_modified,

@@ -138,7 +138,7 @@ class BotMaestroSDKInterface:
         self._access_token = None
         self._task_id = 0
         self._impl: BotMaestroSDKInterface = None  # type: ignore
-        self._version = None
+        self._version = ""
         self.timeout = 30.0
 
         self.server = server

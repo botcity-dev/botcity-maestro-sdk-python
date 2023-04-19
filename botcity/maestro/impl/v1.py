@@ -114,7 +114,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
                 )
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
-                    test: bool = False) -> model.AutomationTask:
+                    test: bool = False, **kwargs) -> model.AutomationTask:
         """
         Creates a task to be executed on the BotMaestro portal.
 

@@ -120,7 +120,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
     @ensure_implementation()
     @ensure_access_token()
     def create_task(self, activity_label: str, parameters: Dict[str, object],
-                    test: bool = False) -> model.AutomationTask:
+                    test: bool = False, priority: int = 0, min_execution_date=None) -> model.AutomationTask:
         """
         Creates a task to be executed on the BotMaestro portal.
 
@@ -128,11 +128,14 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             activity_label: The activity unique identified.
             parameters: Dictionary with parameters and values for this task.
             test: Whether or not the task is a test.
+            priority: An integer from 0 to 10 to refer to execution priority.
+            min_execution_date: Minimum execution date for the task (dd/mm/yyyy hh:mm).
 
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
-        return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test)
+        return self._impl.create_task(activity_label=activity_label, parameters=parameters, test=test,
+                                      **{'min_execution_date': min_execution_date, 'priority': priority})
 
     @ensure_implementation()
     @ensure_access_token()

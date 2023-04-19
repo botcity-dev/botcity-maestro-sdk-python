@@ -1,4 +1,6 @@
 # type: ignore
+import datetime
+from random import randint
 
 from botcity.maestro import (AutomationTask, AutomationTaskFinishStatus,
                              BotMaestroSDK)
@@ -10,7 +12,9 @@ def test_create_task(maestro: BotMaestroSDK):
         "integer_to_test": 123,
         "double_to_test": 1.0
     }
-    task = maestro.create_task(activity_label="TestCI", parameters=parameters)
+    task = maestro.create_task(activity_label="TestCI", parameters=parameters,
+                               min_execution_date=datetime.datetime.now() + datetime.timedelta(hours=1),
+                               priority=randint(0, 10))
     assert task
 
 
