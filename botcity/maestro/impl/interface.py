@@ -138,7 +138,7 @@ class BotMaestroSDKInterface:
         self._access_token = None
         self._task_id = 0
         self._impl: BotMaestroSDKInterface = None  # type: ignore
-        self._version = ""
+        self._version = None
         self.timeout = 30.0
 
         self.server = server
@@ -265,7 +265,7 @@ class BotMaestroSDKInterface:
         raise NotImplementedError
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
-                    test: bool = False) -> model.AutomationTask:
+                    test: bool = False, *args, **kwargs) -> model.AutomationTask:
         """
         Creates a task to be executed on the BotMaestro portal.
 

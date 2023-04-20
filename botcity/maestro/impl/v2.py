@@ -135,20 +135,20 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             activity_label: The activity unique identified.
             parameters: Dictionary with parameters and values for this task.
             test: Whether or not the task is a test.
-            priority: An integer from 0 to 10 to refer to execution priority.
-            min_execution_date: Minimum execution date for the task.
+            priority: (Optional[int], optional) An integer from 0 to 10 to refer to execution priority.
+            min_execution_date (Optional[datetime.datetime], optional): Minimum execution date for the task.
 
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
         url = f'{self._sdk._server}/api/v2/task'
 
+        if not isinstance(min_execution_date, datetime.datetime):
+            raise ValueError(f"Arg 'min_execution_date' is not datetime. Type {type(min_execution_date)}")
         data = {
             "activityLabel": activity_label, "test": test, "parameters": parameters, "priority": priority,
-            "minExecutionDate": min_execution_date
+            "minExecutionDate": min_execution_date.isoformat()
         }
-        if min_execution_date and isinstance(min_execution_date, datetime.datetime):
-            data["minExecutionDate"] = min_execution_date.isoformat()
 
         headers = self._headers()
         with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
