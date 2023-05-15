@@ -109,7 +109,7 @@ Use BotCity command-line interface (CLI) to deploy your bot into a runtime envir
 #### Execution Logs
 [![BotCity Maestro Alerts](https://botcity.dev/github/readme/maestro/logs.png?)](https://documentation.botcity.dev/maestro/features/logs/)
 
-### 7️⃣  Create your Community Account
+### 6️⃣  Create your Community Account
 
 We have a community account for hobbyists and students. Just signup and start automating.
 
