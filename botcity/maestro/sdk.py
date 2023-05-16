@@ -128,8 +128,8 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             activity_label: The activity unique identified.
             parameters: Dictionary with parameters and values for this task.
             test: Whether or not the task is a test.
-            priority: An integer from 0 to 10 to refer to execution priority.
-            min_execution_date: Minimum execution date for the task (dd/mm/yyyy hh:mm).
+            priority: (Optional[int], optional) An integer from 0 to 10 to refer to execution priority.
+            min_execution_date (Optional[datetime.datetime], optional): Minimum execution date for the task.
 
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
