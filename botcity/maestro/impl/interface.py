@@ -265,7 +265,7 @@ class BotMaestroSDKInterface:
         raise NotImplementedError
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
-                    test: bool = False) -> model.AutomationTask:
+                    test: bool = False, *args, **kwargs) -> model.AutomationTask:
         """
         Creates a task to be executed on the BotMaestro portal.
 

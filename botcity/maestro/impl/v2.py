@@ -126,7 +126,8 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             return model.ServerMessage.from_json(payload=payload)
 
     def create_task(self, activity_label: str, parameters: Dict[str, object],
-                    test: bool = False) -> model.AutomationTask:
+                    test: bool = False, priority: int = 0, min_execution_date=None) -> \
+            model.AutomationTask:
         """
         Creates a task to be executed on the BotMaestro portal.
 
@@ -134,14 +135,21 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             activity_label: The activity unique identified.
             parameters: Dictionary with parameters and values for this task.
             test: Whether or not the task is a test.
+            priority: (Optional[int], optional) An integer from 0 to 10 to refer to execution priority.
+            min_execution_date (Optional[datetime.datetime], optional): Minimum execution date for the task.
 
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
         url = f'{self._sdk._server}/api/v2/task'
+
+        if not isinstance(min_execution_date, datetime.datetime):
+            raise ValueError(f"Arg 'min_execution_date' is not datetime. Type {type(min_execution_date)}")
         data = {
-            "activityLabel": activity_label, "test": test, "parameters": parameters
+            "activityLabel": activity_label, "test": test, "parameters": parameters, "priority": priority,
+            "minExecutionDate": min_execution_date.isoformat()
         }
+
         headers = self._headers()
         with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
             if req.ok:
@@ -662,7 +670,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
         with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
-                return req.text
+                return str(req.text)
             else:
                 try:
                     message = 'Error during log read. Server returned %d. %s' % (
