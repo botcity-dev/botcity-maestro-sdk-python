@@ -90,3 +90,13 @@ class DataPoolEntry:
                 self.update_from_json(payload=req.content)
                 return json.loads(req.content)
             req.raise_for_status()
+
+    def report_done(self):
+        self._report(state=StateEnum.DONE)
+
+    def _report(self, state: str):
+        self.state = state
+        self.save()
+
+    def report_error(self):
+        self._report(state=StateEnum.ERROR)
