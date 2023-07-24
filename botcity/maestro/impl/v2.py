@@ -738,7 +738,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
     def create_datapool(self, pool):
         url = f'{self._sdk.server}/api/v2/datapool'
         pool.maestro = self
-        with requests.post(url, data=json.dumps(pool.get_dict_to_create()), headers=self._headers(),
+        with requests.post(url, data=json.dumps(pool.to_dict()), headers=self._headers(),
                            timeout=self.timeout) as req:
             if req.ok:
                 return pool
