@@ -16,9 +16,9 @@ class DataPoolEntry:
     task_id: int = None
     parent: str = None
     child: str = None
-    dateRegister: str = None
-    dateProcessing: str = None
-    dateFinished: str = None
+    date_register: str = None
+    date_processing: str = None
+    date_finished: str = None
     maestro: str = None
 
     def to_json(self):
@@ -47,9 +47,9 @@ class DataPoolEntry:
         self.priority = values.get("priority")
         self.parent = values.get("parent")
         self.child = values.get('child')
-        self.dateRegister = values.get("dateRegister")
-        self.dateProcessing = values.get("dateProcessing")
-        self.dateFinished = values.get("dateFinished")
+        self.date_register = values.get("dateRegister")
+        self.date_processing = values.get("dateProcessing")
+        self.date_finished = values.get("dateFinished")
         return self
 
     def __setattr__(self, key, value):

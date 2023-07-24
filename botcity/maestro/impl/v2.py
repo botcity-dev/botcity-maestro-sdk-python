@@ -13,8 +13,6 @@ import importlib_metadata
 import requests
 from requests_toolbelt import MultipartEncoder
 
-import botcity.datapool
-
 from .. import model
 from .interface import BotMaestroSDKInterface
 
@@ -739,7 +737,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
 
     def create_datapool(self, pool):
         url = f'{self._sdk.server}/api/v2/datapool'
-        pool.maestro = self._sdk
+        pool.maestro = self
         with requests.post(url, data=json.dumps(pool.get_dict_to_create()), headers=self._headers(),
                            timeout=self.timeout) as req:
             if req.ok:
@@ -748,10 +746,11 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 req.raise_for_status()
 
     def get_datapool(self, label: str):
+        from ..datapool import DataPool
         url = f'{self._sdk._server}/api/v2/datapool/{label}'
 
         with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
-                return botcity.datapool.DataPool.from_json(payload=req.content, maestro=self._sdk)
+                return DataPool.from_json(payload=req.content, maestro=self)
             else:
                 return None
