@@ -145,7 +145,6 @@ class DataPool:
                 entry = DataPoolEntry(task_id=task_id)
                 entry.maestro = self.maestro
                 entry.update_from_json(payload=req.content)
-                entry.get()
                 return entry
 
             req.raise_for_status()
