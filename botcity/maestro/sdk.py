@@ -349,3 +349,17 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             value: Credential value
         """
         return self._impl.create_credential(label, key, value)
+
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def create_datapool(self, pool):
+        new_pool = self._impl.create_datapool(pool=pool)
+        return new_pool
+
+    @ensure_implementation()
+    @since_version("2.0.0")
+    @ensure_access_token()
+    def get_datapool(self, label: str):
+        new_pool = self._impl.get_datapool(label=label)
+        return new_pool
