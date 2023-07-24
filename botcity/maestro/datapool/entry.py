@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 import requests
 
+from ..impl import BotMaestroSDKInterface
 from .enums import StateEnum
 
 
@@ -19,7 +20,7 @@ class DataPoolEntry:
     date_register: str = None
     date_processing: str = None
     date_finished: str = None
-    maestro: str = None
+    maestro: BotMaestroSDKInterface = None
 
     def to_json(self):
         data = {"priority": self.priority, "values": self.values}
@@ -85,7 +86,7 @@ class DataPoolEntry:
     def save(self):
         url = f'{self.maestro.server}/api/v2/datapool/{self.datapool_label}/entry/{self.entry_id}'
         data = self.json_to_update()
-        with requests.post(url, data=data, headers=self.maestro._impl._headers(), timeout=self.maestro.timeout) as req:
+        with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
             if req.ok:
                 self.update_from_json(payload=req.content)
                 return json.loads(req.content)
