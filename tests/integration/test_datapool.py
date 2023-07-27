@@ -56,5 +56,4 @@ def test_is_empty(pool: DataPool):
 @pytest.mark.depends(name="test_is_empty")
 def test_next(pool: DataPool):
     entry = pool.next(task_id=123)
-    entry.state = "DONE"
-    entry.save()
+    entry.report_done()
