@@ -354,6 +354,15 @@ class BotMaestroSDK(BotMaestroSDKInterface):
     @since_version("3.0.2")
     @ensure_access_token()
     def create_datapool(self, pool):
+        """
+        Create a new datapool on the BotMaestro portal.
+
+        Args:
+            pool: The DataPool [DataPool][botcity.maestro.datapool.DataPool] instance.
+
+        Returns:
+            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+        """
         new_pool = self._impl.create_datapool(pool=pool)
         return new_pool
 
@@ -361,5 +370,14 @@ class BotMaestroSDK(BotMaestroSDKInterface):
     @since_version("3.0.2")
     @ensure_access_token()
     def get_datapool(self, label: str):
+        """
+        Get datapool on the BotMaestro portal.
+
+        Args:
+            label: Label DataPool.
+
+        Returns:
+            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+        """
         new_pool = self._impl.get_datapool(label=label)
         return new_pool

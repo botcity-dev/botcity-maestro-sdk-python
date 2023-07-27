@@ -22,11 +22,23 @@ class DataPoolEntry:
     date_finished: str = None
     maestro: BotMaestroSDKInterface = None
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """
+        Get properties class in dict.
+
+        Returns: str
+
+        """
         data = {"priority": self.priority, "values": self.values}
         return json.dumps(data)
 
-    def json_to_update(self):
+    def json_to_update(self) -> str:
+        """
+        Create Json by properties to update.
+
+        Returns: str
+
+        """
         data = {
             "priority": self.priority,
             "values": self.values,
@@ -39,6 +51,15 @@ class DataPoolEntry:
         return json.dumps(data)
 
     def update_from_json(self, payload: bytes):
+        """
+
+        Update properties by response endpoint Maestro.
+        Args:
+            payload: Response to endpoint Maestro.
+
+        Returns: DataPoolEntry
+
+        """
         values = json.loads(payload)
         self.entry_id = values.get("id")
         self.datapool_label = values.get('dataPoolLabel')
@@ -83,7 +104,13 @@ class DataPoolEntry:
             if state not in states:
                 raise ValueError(f"In state {state}, only change to states {','.join(states)} is allowed.")
 
-    def save(self):
+    def save(self) -> dict:
+        """
+        Update value state Entry in DataPool.
+
+        Returns: dict
+
+        """
         url = f'{self.maestro.server}/api/v2/datapool/{self.datapool_label}/entry/{self.entry_id}'
         data = self.json_to_update()
         with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
@@ -93,6 +120,11 @@ class DataPoolEntry:
             req.raise_for_status()
 
     def report_done(self):
+        """
+        Report state DONE to DataPool Entry.
+        Returns: None
+
+        """
         self._report(state=StateEnum.DONE)
 
     def _report(self, state: str):
@@ -100,4 +132,9 @@ class DataPoolEntry:
         self.save()
 
     def report_error(self):
+        """
+        Report state ERROR to DataPool Entry.
+        Returns: None
+
+        """
         self._report(state=StateEnum.ERROR)
