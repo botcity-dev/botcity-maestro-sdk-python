@@ -1,18 +1,20 @@
 # type: ignore
 
 import os
+import random
 import shutil
 import tempfile
 from uuid import uuid4
 
 import pytest
 
-from botcity.maestro import BotMaestroSDK
+from botcity.maestro import BotMaestroSDK, DataPool, DataPoolEntry
 
 SERVER = os.getenv("BOTCITY_SERVER")
 LOGIN = os.getenv("BOTCITY_LOGIN")
 KEY = os.getenv("BOTCITY_KEY")
 ACTIVITY_LABEL_TO_LOG = f'TestCI-{uuid4()}'
+DATAPOOL_LABEL = f"testing-{uuid4()}"
 
 
 @pytest.fixture
@@ -63,6 +65,13 @@ def credential_key():
 
 
 @pytest.fixture(scope="session")
+def pool(activity_label: str, maestro: BotMaestroSDK) -> DataPool:
+    pool = DataPool(label=DATAPOOL_LABEL, default_automation=activity_label)
+    yield pool
+    pool._delete()
+
+
+@pytest.fixture(scope="session")
 def task(maestro: BotMaestroSDK, activity_label: str):
     parameters = {
         "test_to_test": "testing",
@@ -76,3 +85,10 @@ def task(maestro: BotMaestroSDK, activity_label: str):
 @pytest.fixture(scope="session")
 def activity_label():
     return 'TestCI'
+
+
+@pytest.fixture()
+def datapool_entry():
+    integration_test_value = random.randint(0, 100)
+    priority = random.randint(0, 10)
+    yield DataPoolEntry(values={"integration_test_value": integration_test_value}, priority=priority)

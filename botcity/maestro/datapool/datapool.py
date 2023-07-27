@@ -148,3 +148,10 @@ class DataPool:
                 return entry
 
             req.raise_for_status()
+
+    def _delete(self):
+        url = f'{self.maestro.server}/api/v2/datapool/{self.label}'
+        with requests.delete(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+            if req.ok:
+                return True
+            req.raise_for_status()
