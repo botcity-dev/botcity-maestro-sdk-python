@@ -734,3 +734,41 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 return model.ServerMessage.from_json(req.text)
             else:
                 return None
+
+    def create_datapool(self, pool):
+        """
+        Create a new datapool on the BotMaestro portal.
+
+        Args:
+            pool: The DataPool [DataPool][botcity.maestro.datapool.DataPool] instance.
+
+        Returns:
+            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+        """
+        url = f'{self._sdk.server}/api/v2/datapool'
+        pool.maestro = self
+        with requests.post(url, data=json.dumps(pool.to_dict()), headers=self._headers(),
+                           timeout=self.timeout) as req:
+            if req.ok:
+                return pool
+            else:
+                req.raise_for_status()
+
+    def get_datapool(self, label: str):
+        """
+        Get datapool on the BotMaestro portal.
+
+        Args:
+            label: Label DataPool.
+
+        Returns:
+            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool].
+        """
+        from ..datapool import DataPool
+        url = f'{self._sdk._server}/api/v2/datapool/{label}'
+
+        with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
+            if req.ok:
+                return DataPool.from_json(payload=req.content, maestro=self)
+            else:
+                return None

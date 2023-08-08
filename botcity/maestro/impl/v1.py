@@ -470,3 +470,9 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
             value: Credential value
         """
         raise NotImplementedError
+
+    def create_datapool(self):
+        raise NotImplementedError
+
+    def get_datapool(self, label: str):
+        raise NotImplementedError
