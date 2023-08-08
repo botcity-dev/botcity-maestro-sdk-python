@@ -4,6 +4,8 @@ import os
 import random
 import shutil
 import tempfile
+from datetime import datetime, timedelta
+from random import randint
 from uuid import uuid4
 
 import pytest
@@ -19,7 +21,7 @@ DATAPOOL_LABEL = f"testing-{uuid4()}"
 
 @pytest.fixture
 def path_screenshot() -> str:
-    return os.path.join('tests', 'screenshot.png')
+    return os.path.abspath(os.path.join('tests', 'screenshot.png'))
 
 
 @pytest.fixture
@@ -78,7 +80,10 @@ def task(maestro: BotMaestroSDK, activity_label: str):
         "integer_to_test": 123,
         "double_to_test": 1.0
     }
-    task = maestro.create_task(activity_label=activity_label, parameters=parameters)
+    task = maestro.create_task(activity_label=activity_label, parameters=parameters,
+                               min_execution_date=datetime.now() + timedelta(hours=1),
+                               priority=randint(0, 10)
+                               )
     yield task
 
 
