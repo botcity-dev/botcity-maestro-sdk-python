@@ -147,7 +147,9 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             "activityLabel": activity_label, "test": test, "parameters": parameters, "priority": priority,
         }
 
-        if min_execution_date and isinstance(min_execution_date, datetime.datetime):
+        if min_execution_date is not None:
+            if not isinstance(min_execution_date, datetime.datetime):
+                raise ValueError(f"Arg 'min_execution_date' is not datetime. Type {type(min_execution_date)}")
             data["minExecutionDate"] = min_execution_date.isoformat()
 
         headers = self._headers()
