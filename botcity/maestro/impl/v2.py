@@ -143,12 +143,12 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         """
         url = f'{self._sdk._server}/api/v2/task'
 
-        if min_execution_date is not None and not isinstance(min_execution_date, datetime.datetime):
-            raise ValueError(f"Arg 'min_execution_date' is not datetime. Type {type(min_execution_date)}")
         data = {
             "activityLabel": activity_label, "test": test, "parameters": parameters, "priority": priority,
-            "minExecutionDate": min_execution_date.isoformat()
         }
+
+        if min_execution_date and isinstance(min_execution_date, datetime.datetime):
+            data["minExecutionDate"] = min_execution_date.isoformat()
 
         headers = self._headers()
         with requests.post(url, json=data, headers=headers, timeout=self.timeout) as req:
