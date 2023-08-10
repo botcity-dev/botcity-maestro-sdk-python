@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass, field
+from typing import Optional
 
 import requests
 
@@ -42,15 +43,15 @@ class DataPoolEntry:
         data = {
             "priority": self.priority,
             "values": self.values,
-            "datapool_label": self.datapool_label,
+            "dataPoolLabel": self.datapool_label,
             "state": self.state,
-            "task_id": self.task_id,
+            "taskId": self.task_id,
             "parent": self.parent,
             "child": self.child,
         }
         return json.dumps(data)
 
-    def update_from_json(self, payload: bytes):
+    def update_from_json(self, payload: bytes) -> 'DataPoolEntry':
         """
 
         Update properties by response endpoint Maestro.
@@ -65,7 +66,7 @@ class DataPoolEntry:
         self.datapool_label = values.get('dataPoolLabel')
         self.state = values.get("state")
         self.values = values.get("values")
-        self.task_id = values.get("taskId", self.task_id)
+        self.task_id = values.get("taskId")
         self.priority = values.get("priority")
         self.parent = values.get("parent")
         self.child = values.get('child')
@@ -74,15 +75,33 @@ class DataPoolEntry:
         self.date_finished = values.get("dateFinished")
         return self
 
+    def get_value(self, key: str, default: Optional[str] = None) -> str:
+        """
+        Get value by key.
+
+        Args:
+            key: Key to get value.
+            default: Default value if key not exists.
+
+        Returns: str
+
+        """
+        return self.values.get(key, default)
+
     def __setattr__(self, key, value):
         if key == 'state':
             self._verify_state(state=value)
         self.__dict__[key] = value
 
     def __getitem__(self, item):
+        if item in self.values:
+            return self.values[item]
         return getattr(self, item)
 
     def __setitem__(self, key, value):
+        if key in self.values:
+            self.values[key] = value
+            return
         setattr(self, key, value)
 
     def _verify_state(self, state: str):
@@ -104,20 +123,23 @@ class DataPoolEntry:
             if state not in states:
                 raise ValueError(f"In state {state}, only change to states {','.join(states)} is allowed.")
 
-    def save(self) -> dict:
+    def save(self) -> 'DataPoolEntry':
         """
-        Update value state Entry in DataPool.
+        Update Entry in DataPool.
 
         Returns: dict
-
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.datapool_label}/entry/{self.entry_id}'
         data = self.json_to_update()
         with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
             if req.ok:
                 self.update_from_json(payload=req.content)
-                return json.loads(req.content)
+                return self.update_from_json(req.content)
             req.raise_for_status()
+
+    def _report(self, state: str):
+        self.state = state
+        self.save()
 
     def report_done(self):
         """
@@ -126,10 +148,6 @@ class DataPoolEntry:
 
         """
         self._report(state=StateEnum.DONE)
-
-    def _report(self, state: str):
-        self.state = state
-        self.save()
 
     def report_error(self):
         """

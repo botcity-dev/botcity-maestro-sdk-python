@@ -1,9 +1,9 @@
 from .interface import (BotMaestroSDKInterface, ensure_access_token,
                         ensure_implementation, since_version)
-from .v1 import BotMaestroSDKV1
-from .v2 import BotMaestroSDKV2
+
+from . import v1
+from . import v2
 
 __all__ = [
-    'BotMaestroSDKV1', 'BotMaestroSDKV2', 'BotMaestroSDKInterface',
-    'ensure_access_token', 'since_version', 'ensure_implementation'
+    'BotMaestroSDKInterface', 'ensure_access_token', 'since_version', 'ensure_implementation', 'v1', 'v2'
 ]

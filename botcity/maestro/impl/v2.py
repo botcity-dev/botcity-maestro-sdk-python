@@ -15,6 +15,7 @@ from requests_toolbelt import MultipartEncoder
 
 from .. import model
 from .interface import BotMaestroSDKInterface
+from ..datapool import DataPool
 
 
 class BotMaestroSDKV2(BotMaestroSDKInterface):
@@ -737,7 +738,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             else:
                 return None
 
-    def create_datapool(self, pool):
+    def create_datapool(self, pool) -> 'DataPool':
         """
         Create a new datapool on the BotMaestro portal.
 
@@ -753,10 +754,9 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                            timeout=self.timeout) as req:
             if req.ok:
                 return pool
-            else:
-                req.raise_for_status()
+            req.raise_for_status()
 
-    def get_datapool(self, label: str):
+    def get_datapool(self, label: str) -> 'DataPool':
         """
         Get datapool on the BotMaestro portal.
 
@@ -772,5 +772,4 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:
             if req.ok:
                 return DataPool.from_json(payload=req.content, maestro=self)
-            else:
-                return None
+            req.raise_for_status()
