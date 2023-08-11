@@ -471,7 +471,7 @@ class BotMaestroSDKV1(BotMaestroSDKInterface):
         """
         raise NotImplementedError
 
-    def create_datapool(self):
+    def create_datapool(self, pool):
         raise NotImplementedError
 
     def get_datapool(self, label: str):

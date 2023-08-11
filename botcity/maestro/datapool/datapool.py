@@ -1,10 +1,9 @@
 import json
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, Optional
 
 import requests
 
-from ..sdk import BotMaestroSDKInterface
 from .entry import DataPoolEntry
 from .enums import ConsumptionPolicyEnum, TriggerEnum
 
@@ -22,7 +21,7 @@ class DataPool:
     max_errors_before_inactive: int = 0
     item_max_processing_time: int = 0
     datapool_id: str = None
-    maestro: BotMaestroSDKInterface = None
+    maestro: 'BotMaestroSDKInterface' = None  # noqa: F821
     active: bool = True
 
     def to_dict(self):
@@ -47,7 +46,7 @@ class DataPool:
         }
 
     @staticmethod
-    def from_json(payload: bytes, maestro: BotMaestroSDKInterface) -> 'DataPool':
+    def from_json(payload: bytes, maestro: 'BotMaestroSDKInterface') -> 'DataPool':  # noqa: F821
         """
         Instantiate class by payload to request maestro.
 
@@ -128,9 +127,9 @@ class DataPool:
                 return True
             req.raise_for_status()
 
-    def is_activated(self) -> bool:
+    def is_active(self) -> bool:
         """
-        Check if the DataPool is active in Maestro.
+        Check if the DataPool is active.
         Returns: bool
 
         """
@@ -155,13 +154,15 @@ class DataPool:
                 return json.loads(req.content)
             req.raise_for_status()
 
-    def create_entry(self, entry: DataPoolEntry):
+    def create_entry(self, entry: DataPoolEntry) -> DataPoolEntry:
         """
         Create an entry by DataPool
+
         Args:
             entry: Instance of DataPoolEntry
 
-        Returns: dict
+        Returns:
+            DataPoolEntry: the entry that was created.
 
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/push'
@@ -170,45 +171,54 @@ class DataPool:
                            timeout=self.maestro.timeout) as req:
             if req.ok:
                 entry.update_from_json(payload=req.content)
-                return json.loads(req.content)
+                return entry
+            req.raise_for_status()
+
+    def get_entry(self, entry_id: str) -> DataPoolEntry:
+        """Fetch an entry from the DataPool by its ID.
+
+        Args:
+            entry_id (str): The ID of the entry to fetch.
+
+        Returns:
+            DataPoolEntry: The entry that was fetched.
+        """
+        url = f'{self.maestro.server}/api/v2/datapool/{self.label}/entry/{entry_id}'
+        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+            if req.ok:
+                entry = DataPoolEntry()
+                entry.update_from_json(payload=req.content)
+                entry.maestro = self.maestro
+                return entry
             req.raise_for_status()
 
     def is_empty(self) -> bool:
-        """
-        Checks if there are pending items in the DataPool.
-        Returns: bool
+        """Checks if the DataPool is empty.
 
+        Returns:
+            bool: True if the DataPool is empty, False otherwise.
         """
         summary = self.summary()
         if summary.get("countPending", 0) == 0:
             return True
         return False
 
-    def save_entry(self, entry: DataPoolEntry) -> dict:
+    def has_next(self) -> bool:
+        """Checks if there are pending items in the DataPool.
+
+        Returns:
+            bool: True if there are pending items, False otherwise.
         """
-        Updates the Entry in the DataPool.
+        return not self.is_empty()
+
+    def next(self, task_id: Optional[str]) -> Union[DataPoolEntry, None]:
+        """Fetch the next pending entry.
+
         Args:
-            entry: Instance of DataPoolEntry
+            task_id: TaskId to be associated with this entry.
 
-        Returns: dict
-
-        """
-        url = f'{self.maestro.server}/api/v2/datapool/{self.label}/entry/{entry.entry_id}'
-        data = entry.json_to_update()
-        with requests.post(url, data=data, headers=self.maestro._headers(),
-                           timeout=self.maestro.timeout) as req:
-            if req.ok:
-                entry.update_from_json(payload=req.content)
-                return json.loads(req.content)
-            req.raise_for_status()
-
-    def next(self, task_id: int) -> Union[DataPoolEntry, None]:
-        """
-        Pull DataPull to get the next available entry.
-        Args:
-            task_id: Task Id in Maestro.
-
-        Returns: DataPoolEntry
+        Returns:
+            DataPoolEntry or None: The next pending entry, or None if there are no pending entries.
 
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/pull'
@@ -217,9 +227,10 @@ class DataPool:
                 return None
 
             if req.ok:
-                entry = DataPoolEntry(task_id=task_id)
-                entry.maestro = self.maestro
+                entry = DataPoolEntry()
                 entry.update_from_json(payload=req.content)
+                entry.task_id = str(task_id)
+                entry.maestro = self.maestro
                 return entry
 
             req.raise_for_status()
@@ -227,11 +238,7 @@ class DataPool:
     def _delete(self):
         """
         Delete DataPool in Maestro.
-        Returns:
-
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}'
         with requests.delete(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
-            if req.ok:
-                return True
             req.raise_for_status()

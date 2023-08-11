@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import pytest
 
-from botcity.maestro import BotMaestroSDK, DataPool, DataPoolEntry
+from botcity.maestro import *
 
 SERVER = os.getenv("BOTCITY_SERVER")
 LOGIN = os.getenv("BOTCITY_LOGIN")

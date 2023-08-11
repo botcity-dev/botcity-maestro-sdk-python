@@ -4,8 +4,10 @@ import requests
 import urllib3
 
 from . import model
-from .impl import (BotMaestroSDKInterface, BotMaestroSDKV1, BotMaestroSDKV2,
+from .impl import (BotMaestroSDKInterface, v1, v2,
                    ensure_access_token, ensure_implementation, since_version)
+
+from .datapool import DataPool
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -35,18 +37,18 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             with requests.get(url, verify=self.VERIFY_SSL_CERT) as req:
                 try:
                     if req.status_code == 200:
-                        self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+                        self._impl = v2.BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
                         self._version = req.json()['version']
                 finally:
                     if self._impl is None:
-                        self._impl = BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
+                        self._impl = v1.BotMaestroSDKV1(self.server, self._login, self._key, sdk=self)
                         self._version = "1.0.0"
             self._impl.access_token = self.access_token
             self._impl._login = self._login
         except Exception as ex:
             if self.RAISE_NOT_CONNECTED:
                 raise ex
-            self._impl = BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
+            self._impl = v2.BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
             self._version = "999.0.0"
             self._impl.access_token = self.access_token
             self._impl._login = self._login
@@ -353,7 +355,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
     @ensure_implementation()
     @since_version("3.0.2")
     @ensure_access_token()
-    def create_datapool(self, pool):
+    def create_datapool(self, pool) -> DataPool:
         """
         Create a new datapool on the BotMaestro portal.
 
@@ -361,7 +363,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             pool: The DataPool [DataPool][botcity.maestro.datapool.DataPool] instance.
 
         Returns:
-            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+            DataPool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
         """
         new_pool = self._impl.create_datapool(pool=pool)
         return new_pool
@@ -369,7 +371,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
     @ensure_implementation()
     @since_version("3.0.2")
     @ensure_access_token()
-    def get_datapool(self, label: str):
+    def get_datapool(self, label: str) -> DataPool:
         """
         Get datapool on the BotMaestro portal.
 
@@ -377,7 +379,7 @@ class BotMaestroSDK(BotMaestroSDKInterface):
             label: Label DataPool.
 
         Returns:
-            Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+            DataPool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
         """
-        new_pool = self._impl.get_datapool(label=label)
-        return new_pool
+        pool = self._impl.get_datapool(label=label)
+        return pool

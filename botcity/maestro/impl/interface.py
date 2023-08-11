@@ -6,6 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 from packaging import version
 
 from .. import model
+from ..datapool import DataPool
+
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -485,5 +487,29 @@ class BotMaestroSDKInterface:
 
         Returns:
             value (str): Key value that was requested
+        """
+        raise NotImplementedError
+
+    def create_datapool(self, pool) -> DataPool:
+        """
+        Create a new datapool on the BotMaestro portal.
+
+        Args:
+            pool: The DataPool [DataPool][botcity.maestro.datapool.DataPool] instance.
+
+        Returns:
+            DataPool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
+        """
+        raise NotImplementedError
+
+    def get_datapool(self, label: str) -> DataPool:
+        """
+        Get datapool on the BotMaestro portal.
+
+        Args:
+            label: Label DataPool.
+
+        Returns:
+            DataPool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool] instance.
         """
         raise NotImplementedError
