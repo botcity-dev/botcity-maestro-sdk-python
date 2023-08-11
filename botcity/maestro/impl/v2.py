@@ -738,7 +738,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
             else:
                 return None
 
-    def create_datapool(self, pool) -> 'DataPool':
+    def create_datapool(self, pool) -> DataPool:
         """
         Create a new datapool on the BotMaestro portal.
 
@@ -756,7 +756,7 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
                 return pool
             req.raise_for_status()
 
-    def get_datapool(self, label: str) -> 'DataPool':
+    def get_datapool(self, label: str) -> DataPool:
         """
         Get datapool on the BotMaestro portal.
 
@@ -766,7 +766,6 @@ class BotMaestroSDKV2(BotMaestroSDKInterface):
         Returns:
             Datapool instance. See [DataPool][ [DataPool][botcity.maestro.datapool.DataPool].
         """
-        from ..datapool import DataPool
         url = f'{self._sdk._server}/api/v2/datapool/{label}'
 
         with requests.get(url, headers=self._headers(), timeout=self.timeout) as req:

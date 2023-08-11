@@ -4,7 +4,6 @@ from typing import Optional
 
 import requests
 
-from ..impl import BotMaestroSDKInterface
 from .enums import StateEnum
 
 
@@ -21,7 +20,7 @@ class DataPoolEntry:
     date_register: str = None
     date_processing: str = None
     date_finished: str = None
-    maestro: BotMaestroSDKInterface = None
+    maestro: 'BotMaestroSDKInterface' = None  # noqa: F821
 
     def to_json(self) -> str:
         """
