@@ -107,6 +107,9 @@ class DataPoolEntry:
         if self.state is None:
             return
 
+        if self.state == state:
+            return
+
         if self.state == StateEnum.PENDING:
             states = [StateEnum.PROCESSING]
             if state not in [StateEnum.PROCESSING]:
@@ -132,7 +135,6 @@ class DataPoolEntry:
         data = self.json_to_update()
         with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
             if req.ok:
-                self.update_from_json(payload=req.content)
                 return self.update_from_json(req.content)
             req.raise_for_status()
 
