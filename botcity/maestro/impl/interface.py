@@ -141,7 +141,7 @@ class BotMaestroSDKInterface:
         self._task_id = 0
         self._impl: BotMaestroSDKInterface = None  # type: ignore
         self._version = None
-        self.timeout = 30.0
+        self._timeout = 30.0
 
         self.server = server
 

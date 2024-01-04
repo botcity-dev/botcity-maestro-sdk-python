@@ -105,7 +105,7 @@ class DataPool:
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}'
 
         with requests.post(url, data=json.dumps(data), headers=self.maestro._headers(),
-                           timeout=self.maestro.timeout) as req:
+                           timeout=self.maestro._timeout) as req:
             if req.ok:
                 self._update_from_json(payload=req.content)
                 return True
@@ -121,7 +121,7 @@ class DataPool:
         data = self.to_dict()
         data['active'] = False
         with requests.post(url, data=json.dumps(data), headers=self.maestro._headers(),
-                           timeout=self.maestro.timeout) as req:
+                           timeout=self.maestro._timeout) as req:
             if req.ok:
                 self._update_from_json(payload=req.content)
                 return True
@@ -135,7 +135,7 @@ class DataPool:
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}'
 
-        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             if req.ok:
                 self._update_from_json(payload=req.content)
                 return self.active
@@ -149,7 +149,7 @@ class DataPool:
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/summary'
 
-        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             if req.ok:
                 return json.loads(req.content)
             req.raise_for_status()
@@ -168,7 +168,7 @@ class DataPool:
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/push'
 
         with requests.post(url, data=entry.to_json(), headers=self.maestro._headers(),
-                           timeout=self.maestro.timeout) as req:
+                           timeout=self.maestro._timeout) as req:
             if req.ok:
                 entry.update_from_json(payload=req.content)
                 return entry
@@ -184,7 +184,7 @@ class DataPool:
             DataPoolEntry: The entry that was fetched.
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/entry/{entry_id}'
-        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             if req.ok:
                 entry = DataPoolEntry()
                 entry.update_from_json(payload=req.content)
@@ -222,7 +222,7 @@ class DataPool:
 
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}/pull'
-        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.get(url, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             if req.status_code == 204:
                 return None
 
@@ -240,5 +240,5 @@ class DataPool:
         Delete DataPool in Maestro.
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.label}'
-        with requests.delete(url, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.delete(url, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             req.raise_for_status()
