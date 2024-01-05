@@ -50,8 +50,19 @@ class BotMaestroSDK(BotMaestroSDKInterface):
                 raise ex
             self._impl = v2.BotMaestroSDKV2(self.server, self._login, self._key, sdk=self)
             self._version = "999.0.0"
+            self._impl._timeout = self.timeout
             self._impl.access_token = self.access_token
             self._impl._login = self._login
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self._timeout = value
+        if self._impl:
+            self._impl._timeout = value
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """

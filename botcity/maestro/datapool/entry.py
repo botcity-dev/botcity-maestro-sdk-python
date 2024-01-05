@@ -133,7 +133,7 @@ class DataPoolEntry:
         """
         url = f'{self.maestro.server}/api/v2/datapool/{self.datapool_label}/entry/{self.entry_id}'
         data = self.json_to_update()
-        with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro.timeout) as req:
+        with requests.post(url, data=data, headers=self.maestro._headers(), timeout=self.maestro._timeout) as req:
             if req.ok:
                 return self.update_from_json(req.content)
             req.raise_for_status()
