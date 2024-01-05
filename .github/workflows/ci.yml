@@ -2,37 +2,39 @@ name: Tests
 
 on:
   push:
-  pull_request:
+  pull_request_target:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BOTCITY_SERVER: ${{ secrets.BOTCITY_SERVER }}
-  BOTCITY_LOGIN: ${{ secrets.BOTCITY_LOGIN }}
-  BOTCITY_KEY: ${{ secrets.BOTCITY_KEY }}
-
-
 jobs:
-  build:
+  # The authorize job is used to authorize external contributors to run tests
+  # on the repository. This is necessary because the repository secrets are
+  # not available to external contributors.
+  # Source: https://iterative.ai/blog/testing-external-contributions-using-github-actions-secrets
+  authorize:
+    environment:
+      ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository && 'external' || 'internal' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          true
+
+  test:
     runs-on: ${{ matrix.os }}
     defaults:
-        run:
-          shell: bash
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.11"]
+        os: [ubuntu-latest]
+        python-version: ["3.9", "3.12"]
     steps:
-      - uses: actions/checkout@v2
-        if: ${{ github.event_name == 'push' }}
-
-      - uses: actions/checkout@v2
-        if:  ${{ github.event_name == 'pull_request' }}
+      - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
