@@ -22,6 +22,7 @@ jobs:
           true
 
   test:
+    needs: authorize
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -32,12 +33,12 @@ jobs:
         os: [ubuntu-latest]
         python-version: ["3.9", "3.12"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
