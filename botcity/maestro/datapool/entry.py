@@ -20,7 +20,7 @@ class DataPoolEntry:
     date_register: str = None
     date_processing: str = None
     date_finished: str = None
-    maestro: 'BotMaestroSDKInterface' = None  # noqa: F821
+    maestro: 'BotMaestroSDK' = None  # noqa: F821
 
     def to_json(self) -> str:
         """

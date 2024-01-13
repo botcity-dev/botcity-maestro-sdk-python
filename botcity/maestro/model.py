@@ -82,9 +82,9 @@ class ServerMessage:
         type: The message type. See [ServerMessageType][botcity.maestro.model.ServerMessageType]
         payload:
     """
-    message: str
-    type: ServerMessageType
-    payload: str
+    message: str = ""
+    type: ServerMessageType = ServerMessageType.ERROR
+    payload: str = ""
 
     def to_json(self) -> str:
         """
@@ -138,31 +138,32 @@ class AutomationTask:
         killed: Whether or not this task received a termination request.
         machine_id: Identifier of the machine that performed the automation.
     """
-    id: int
-    state: AutomationTaskState
-    parameters: Dict[str, object]
-    input_file: 'Artifact'
-    agent_id: int
-    user_email: str
-    user_creation_name: str
-    organization_label: str
-    date_creation: str
-    date_last_modified: str
-    finish_status: AutomationTaskFinishStatus
-    finish_message: str
-    test: bool
-    machine_id: str
-    activity_label: str
-    interrupted: bool
-    min_execution_date: str
-    killed: bool
-    date_start_running: str
-    priority: int
-    repository_label: str
-    processed_items: int
-    failed_items: int
-    total_items: int
-    activity_name: str
+    id: int = 0
+    state: AutomationTaskState = AutomationTaskState.START
+    parameters: Dict[str, object] = None
+    input_file: 'Artifact' = None
+    agent_id: int = 0
+    user_email: str = None
+    user_creation_name: str = None
+    organization_label: str = None
+    date_creation: str = None
+    date_last_modified: str = None
+    finish_status: AutomationTaskFinishStatus = AutomationTaskFinishStatus.FAILED
+    finish_message: str = None
+    test: bool = False
+    machine_id: str = None
+    activity_label: str = None
+    interrupted: bool = False
+    min_execution_date: str = None
+    killed: bool = False
+    date_start_running: str = None
+    priority: int = 0
+    repository_label: str = None
+    processed_items: int = 0
+    failed_items: int = 0
+    total_items: int = 0
+    activity_name: str = None
+
 
     def to_json(self) -> str:
         """
@@ -254,17 +255,17 @@ class Artifact:
         user: The user unique identifier.
         date_creation: Datetime information of when this artifact was created.
     """
-    id: int
-    type: str
-    task_id: int
-    task_name: str
-    name: str
-    filename: str
-    storage_filename: str
-    storage_filepath: str
-    organization: int
-    user: Optional[int]
-    date_creation: str
+    id: int = 0
+    type: str = None
+    task_id: int = 0
+    task_name: str = None
+    name: str = None
+    filename: str = None
+    storage_filename: str = None
+    storage_filepath: str = None
+    organization: int = 0
+    user: Optional[int] = 0
+    date_creation: str = None
 
     def to_json(self) -> str:
         """
@@ -330,9 +331,9 @@ class Column:
         label: The column unique identifier.
         width: The suggested log column width when rendering it on the BotMaestro portal.
     """
-    name: str
-    label: str
-    width: int
+    name: str = None
+    label: str = None
+    width: int = 0
 
 
 @dataclass

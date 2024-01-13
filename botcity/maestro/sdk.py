@@ -27,6 +27,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 F = TypeVar('F', bound=Callable[..., Any])
 
 
+def _get_return_type(func: F) -> Any:
+    return func.__annotations__.get('return', None)
+
+
 def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
     """
     Decorator to ensure that a token is available.
@@ -65,6 +69,14 @@ def ensure_access_token(invoke: Optional[bool] = False) -> Callable[[F], F]:
                         message += "."
                         warnings.warn(message, stacklevel=2)
                         if not invoke:
+                            if obj.MOCK_OBJECT_WHEN_DISCONNECTED:
+                                # We need to return an object of the same type as the function
+                                # so we get the return type and return an empty object of that type
+                                try:
+                                    return _get_return_type(func)()
+                                except Exception:
+                                    # If we can't get the return type or fail to create one, return None
+                                    return None
                             return lambda *args, **kwargs: None
             else:
                 raise NotImplementedError('ensure_token is only valid for BotMaestroSDK methods.')
@@ -112,6 +124,7 @@ class BotMaestroSDK:
     # More details about VERIFY_SSL_CERT here
     # https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification
     VERIFY_SSL_CERT = True
+    MOCK_OBJECT_WHEN_DISCONNECTED = False
 
     def __init__(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
