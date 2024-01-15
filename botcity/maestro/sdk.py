@@ -261,7 +261,9 @@ class BotMaestroSDK:
         data = {"login": self.organization, "key": self._key}
         headers = {'Content-Type': 'application/json'}
 
-        with requests.post(url, data=json.dumps(data), headers=headers, timeout=self._timeout) as req:
+        with requests.post(
+            url, data=json.dumps(data), headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 self.access_token = req.json()['accessToken']
             else:
@@ -319,7 +321,9 @@ class BotMaestroSDK:
         data = {"taskId": task_id, "title": title,
                 "message": message, "type": alert_type}
 
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -350,7 +354,9 @@ class BotMaestroSDK:
 
         data = {"emails": email, "logins": users, "subject": subject, "body": body,
                 "type": msg_type, "group": group}
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.status_code != 200:
                 raise ValueError(
                     'Error during message. Server returned %d. %s' %
@@ -387,7 +393,9 @@ class BotMaestroSDK:
             data["minExecutionDate"] = min_execution_date.isoformat()
 
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers, timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 return model.AutomationTask.from_json(req.text)
             else:
@@ -417,7 +425,7 @@ class BotMaestroSDK:
         data = {"finishStatus": status, "finishMessage": message,
                 "state": "FINISHED"}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers, timeout=self._timeout) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -442,7 +450,7 @@ class BotMaestroSDK:
         url = f'{self._server}/api/v2/task/{task_id}'
         data = {"state": "START"}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers, timeout=self._timeout) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -466,7 +474,7 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/task/{task_id}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 payload = req.text
                 return model.AutomationTask.from_json(payload)
@@ -493,7 +501,7 @@ class BotMaestroSDK:
         url = f'{self._server}/api/v2/task/{task_id}'
         data = {"interrupted": True}
         headers = self._headers()
-        with requests.post(url, json=data, headers=headers, timeout=self._timeout) as req:
+        with requests.post(url, json=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -521,7 +529,9 @@ class BotMaestroSDK:
         cols = [asdict(c) for c in columns]
 
         data = {"activityLabel": activity_label, "columns": cols, 'organizationLabel': self.organization}
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -546,7 +556,9 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/log/{activity_label}/entry'
 
-        with requests.post(url, json=values, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=values, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.status_code != 200:
                 try:
                     message = 'Error during new log entry. Server returned %d. %s' % (
@@ -576,7 +588,7 @@ class BotMaestroSDK:
         if date:
             days = (datetime.datetime.now()-datetime.datetime.strptime(date, "%d/%m/%Y")).days + 1
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 log = req.json()
                 columns = log.get('columns')
@@ -586,7 +598,9 @@ class BotMaestroSDK:
                 url = f'{self._server}/api/v2/log/{activity_label}/entry-list'
 
                 data = {"days": days}
-                with requests.get(url, params=data, headers=self._headers(), timeout=self._timeout) as entry_req:
+                with requests.get(
+                    url, params=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+                ) as entry_req:
                     if entry_req.ok:
                         log_data = []
                         for en in entry_req.json():
@@ -628,7 +642,7 @@ class BotMaestroSDK:
         # date em branco eh tudo
         url = f'{self._server}/api/v2/log/{activity_label}'
 
-        with requests.delete(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.delete(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.status_code != 200:
                 try:
                     message = 'Error during log delete. Server returned %d. %s' % (
@@ -660,7 +674,9 @@ class BotMaestroSDK:
                 fields={'file': (artifact_name, f)}
             )
             headers = {**self._headers(), 'Content-Type': data.content_type}
-            with requests.post(url, data=data, headers=headers, timeout=self._timeout) as req:
+            with requests.post(
+                url, data=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+            ) as req:
                 if req.ok:
                     return artifact_id
                 else:
@@ -687,7 +703,9 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/artifact'
         data = {'taskId': task_id, 'name': name, 'filename': filename}
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -708,13 +726,15 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/artifact?size=5&page=0&sort=dateCreation,desc&days={days}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 content = req.json()['content']
                 response = [model.Artifact.from_dict(a) for a in content]
                 for page in range(1, req.json()['totalPages']):
                     url = f'{self._server}/api/v2/artifact?size=5&page={page}&sort=dateCreation,desc&days={days}'
-                    with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+                    with requests.get(
+                        url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+                    ) as req:
                         content = req.json()['content']
                         response.extend([model.Artifact.from_dict(a) for a in content])
                 return response
@@ -739,13 +759,15 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/artifact/{artifact_id}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 payload = req.json()
                 filename = payload['fileName']
 
                 url = f'{self.server}/api/v2/artifact/{artifact_id}/file'
-                with requests.get(url, headers=self._headers(), timeout=self._timeout) as req_file:
+                with requests.get(
+                    url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+                ) as req_file:
                     file_content = req_file.content
 
                 return filename, file_content
@@ -790,7 +812,9 @@ class BotMaestroSDK:
                 'stackTrace': trace, 'language': 'PYTHON', 'tags': tags}
 
         response = None
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.status_code == 201:
                 response = req.json()
             else:
@@ -871,7 +895,10 @@ class BotMaestroSDK:
             headers = self._headers()
             headers['Content-Type'] = data_screenshot.content_type
 
-            with requests.post(url_screenshot, data=data_screenshot, headers=headers, timeout=self._timeout) as req:
+            with requests.post(
+                url_screenshot, data=data_screenshot, headers=headers,
+                timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+            ) as req:
                 if not req.ok:
                     try:
                         message = 'Error during new log entry. Server returned %d. %s' % (
@@ -897,7 +924,9 @@ class BotMaestroSDK:
         )
         headers = self._headers()
         headers['Content-Type'] = file.content_type
-        with requests.post(url_attachments, data=file, headers=headers, timeout=self._timeout) as req:
+        with requests.post(
+            url_attachments, data=file, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if not req.ok:
                 try:
                     message = 'Error during new log entry. Server returned %d. %s' % (
@@ -921,7 +950,7 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/credential/{label}/key/{key}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return str(req.text)
             else:
@@ -954,7 +983,9 @@ class BotMaestroSDK:
             'value': value
         }
         url = f'{self._server}/api/v2/credential/{label}/key'
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if not req.ok:
                 req.raise_for_status()
 
@@ -968,7 +999,7 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/credential/{label}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -983,7 +1014,9 @@ class BotMaestroSDK:
         }
         url = f'{self._server}/api/v2/credential'
 
-        with requests.post(url, json=data, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
             else:
@@ -1004,7 +1037,7 @@ class BotMaestroSDK:
         url = f'{self.server}/api/v2/datapool'
         pool.maestro = self
         with requests.post(url, data=json.dumps(pool.to_dict()), headers=self._headers(),
-                           timeout=self._timeout) as req:
+                           timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return pool
             req.raise_for_status()
@@ -1023,7 +1056,7 @@ class BotMaestroSDK:
         """
         url = f'{self._server}/api/v2/datapool/{label}'
 
-        with requests.get(url, headers=self._headers(), timeout=self._timeout) as req:
+        with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
                 return DataPool.from_json(payload=req.content, maestro=self)
             req.raise_for_status()
