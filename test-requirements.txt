@@ -4,4 +4,4 @@ flake8
 isort
 pre-commit
 pytest-depends
-dotenv
+python-dotenv
