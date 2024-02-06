@@ -142,20 +142,27 @@ class AutomationTask:
     state: AutomationTaskState
     parameters: Dict[str, object]
     input_file: 'Artifact'
-    activity_id: int
-    activity_label: str
     agent_id: int
-    user_creation_id: int
+    user_email: str
     user_creation_name: str
-    org_creation_id: int
+    organization_label: str
     date_creation: str
     date_last_modified: str
     finish_status: AutomationTaskFinishStatus
     finish_message: str
     test: bool
-    interrupted: bool
-    killed: bool
     machine_id: str
+    activity_label: str
+    interrupted: bool
+    min_execution_date: str
+    killed: bool
+    date_start_running: str
+    priority: int
+    repository_label: str
+    processed_items: int
+    failed_items: int
+    total_items: int
+    activity_name: str
 
     def to_json(self) -> str:
         """
@@ -181,33 +188,45 @@ class AutomationTask:
         uid = data.get("id")
         state = data.get("state")
         parameters = data.get("parameters")
-        activity_id = data.get("activityId")
-        activity_label = data.get("activityLabel")
         input_file = data.get("inputFile")
         if input_file:
             input_file = Artifact.from_dict(input_file)
         agent_id = data.get("agentId")
-        user_creation_id = data.get("userCreationId")
+        user_email = data.get("userEmail")
         user_creation_name = data.get("userCreationName")
-        org_creation_id = data.get("organizationCreationId")
+        organization_label = data.get("organizationLabel")
         date_creation = data.get("dateCreation")
         date_last_modified = data.get("dateLastModified")
         finish_status = data.get("finishStatus")
         finish_message = data.get("finishMessage")
-        machine_id = data.get("machineId")
         test = data.get("test", False)
+        machine_id = data.get("machineId")
+        activity_label = data.get("activityLabel")
         interrupted = data.get("interrupted", False)
         interrupted = False if interrupted is None else interrupted
+        min_execution_date = data.get("minExecutionDate")
         killed = data.get("killed", False)
         killed = False if killed is None else killed
+        date_start_running = data.get("dateStartRunning")
+        priority = data.get("priority")
+        repository_label = data.get("repositoryLabel")
+        processed_items = data.get("processedItems")
+        failed_items = data.get("failedItems")
+        total_items = data.get("totalItems")
+        activity_name = data.get("activityName")
 
-        return AutomationTask(id=uid, state=state, parameters=parameters, activity_id=activity_id,
+        return AutomationTask(id=uid, state=state, parameters=parameters,
                               activity_label=activity_label,
-                              input_file=input_file, agent_id=agent_id, user_creation_id=user_creation_id,
-                              user_creation_name=user_creation_name, org_creation_id=org_creation_id,
+                              input_file=input_file, agent_id=agent_id, user_email=user_email,
+                              user_creation_name=user_creation_name, organization_label=organization_label,
                               date_creation=date_creation, date_last_modified=date_last_modified,
-                              finish_status=finish_status, finish_message=finish_message, test=test,
-                              interrupted=interrupted, machine_id=machine_id, killed=killed)
+                              finish_status=finish_status, finish_message=finish_message,
+                              test=test, machine_id=machine_id,
+                              interrupted=interrupted, min_execution_date=min_execution_date, killed=killed,
+                              date_start_running=date_start_running, priority=priority,
+                              repository_label=repository_label,
+                              processed_items=processed_items, failed_items=failed_items, total_items=total_items,
+                              activity_name=activity_name)
 
     def is_interrupted(self) -> bool:
         """Whether or not this task received an interrupt request.
