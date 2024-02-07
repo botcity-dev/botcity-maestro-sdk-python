@@ -2,6 +2,8 @@
 import datetime
 from random import randint
 
+import pytest
+
 from botcity.maestro import (AutomationTask, AutomationTaskFinishStatus,
                              BotMaestroSDK)
 
@@ -55,3 +57,87 @@ def test_finish_task_to_failed(maestro: BotMaestroSDK, task: AutomationTask):
     )
     task = maestro.get_task(task_id=str(task.id))
     assert task.finish_status == AutomationTaskFinishStatus.FAILED
+
+def test_finish_task_report_no_items(maestro: BotMaestroSDK, task: AutomationTask):
+    maestro.finish_task(
+        task_id=str(task.id),
+        message="Task Finished OK.",
+        status=AutomationTaskFinishStatus.SUCCESS,
+    )
+    task = maestro.get_task(task_id=str(task.id))
+    assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
+    assert task.total_items == 0
+    assert task.processed_items == 0
+    assert task.failed_items == 0
+
+def test_finish_task_report_items(maestro: BotMaestroSDK, task: AutomationTask):
+    maestro.finish_task(
+        task_id=str(task.id),
+        message="Task Finished with success.",
+        status=AutomationTaskFinishStatus.SUCCESS,
+        total_items=10,
+        processed_items=5,
+        failed_items=5
+    )
+    task = maestro.get_task(task_id=str(task.id))
+    assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
+    assert task.total_items == 10
+    assert task.processed_items == 5
+    assert task.failed_items == 5
+
+
+def test_finish_task_report_total_and_processed(maestro: BotMaestroSDK, task: AutomationTask):
+    maestro.finish_task(
+        task_id=str(task.id),
+        message="Task Finished with success.",
+        status=AutomationTaskFinishStatus.SUCCESS,
+        total_items=10,
+        processed_items=5
+    )
+    task = maestro.get_task(task_id=str(task.id))
+    assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
+    assert task.total_items == 10
+    assert task.processed_items == 5
+    assert task.failed_items == 5
+
+
+def test_finish_task_report_total_and_failed(maestro: BotMaestroSDK, task: AutomationTask):
+    maestro.finish_task(
+        task_id=str(task.id),
+        message="Task Finished with success.",
+        status=AutomationTaskFinishStatus.SUCCESS,
+        total_items=10,
+        failed_items=5
+    )
+    task = maestro.get_task(task_id=str(task.id))
+    assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
+    assert task.total_items == 10
+    assert task.processed_items == 5
+    assert task.failed_items == 5
+
+
+def test_finish_task_report_processed_and_failed(maestro: BotMaestroSDK, task: AutomationTask):
+    maestro.finish_task(
+        task_id=str(task.id),
+        message="Task Finished with success.",
+        status=AutomationTaskFinishStatus.SUCCESS,
+        processed_items=5,
+        failed_items=5
+    )
+    task = maestro.get_task(task_id=str(task.id))
+    assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
+    assert task.total_items == 10
+    assert task.processed_items == 5
+    assert task.failed_items == 5
+
+
+def test_finish_task_report_error_invalid_total_items(maestro: BotMaestroSDK, task: AutomationTask):
+    with pytest.raises(ValueError):
+        maestro.finish_task(
+            task_id=str(task.id),
+            message="Task Finished with success.",
+            status=AutomationTaskFinishStatus.SUCCESS,
+            total_items=10,
+            processed_items=6,
+            failed_items=5
+        )

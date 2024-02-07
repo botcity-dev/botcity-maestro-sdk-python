@@ -406,9 +406,33 @@ class BotMaestroSDK:
                     message = 'Error during task create. Server returned %d. %s' % (req.status_code, req.text)
                 raise ValueError(message)
 
+    @staticmethod
+    def _validate_items(total_items, processed_items, failed_items):
+        if total_items == processed_items == failed_items is None:
+            # If all are None, return None for all
+            return None, None, None
+        if total_items is None and processed_items is not None and failed_items is not None:
+            # If total is None, but processed and failed are not, then total is the sum of both
+            total_items = processed_items + failed_items
+        if total_items is not None and processed_items is not None and failed_items is None:
+            # If total and processed are not None, but failed is, then failed is the difference
+            failed_items = total_items - processed_items
+        if total_items is not None and processed_items is None and failed_items is not None:
+            # If total and failed are not None, but processed is, then processed is the difference
+            processed_items = total_items - failed_items
+        # Make sure no negative values are present
+        total_items = max(0, total_items)
+        processed_items = max(0, processed_items)
+        failed_items = max(0, failed_items)
+        if total_items is not None and processed_items is not None and failed_items is not None:
+            if total_items != processed_items + failed_items:
+                raise ValueError("Total items is not equal to the sum of processed and failed items.")
+        return total_items, processed_items, failed_items
+
     @ensure_access_token()
     def finish_task(self, task_id: str, status: model.AutomationTaskFinishStatus,
-                    message: str = "") -> model.ServerMessage:
+                    message: str = "", total_items: int = None, processed_items: int = None,
+                    failed_items: int = None) -> model.ServerMessage:
         """
         Finishes a given task.
 
@@ -417,13 +441,31 @@ class BotMaestroSDK:
             status: The condition in which the task must be finished.
                 See [AutomationTaskFinishStatus][botcity.maestro.model.AutomationTaskFinishStatus]
             message: A message to be associated with this action.
+            total_items: Total number of items processed by the task.
+            processed_items: Number items processed successfully by the task.
+            failed_items: Number items failed to be processed by the task.
+
+        Note:
+            Starting from version 0.5.0, the parameters `total_items`, `processed_items` and `failed_items` are
+            available to be used. It is important to report the correct values for these parameters as they are used
+            to calculate the ROI, success rate and other metrics.
+
+            Keep in mind that the sum of `processed_items` and `failed_items` must be equal to `total_items`. If
+            `total_items` is None, then the sum of `processed_items` and `failed_items` will be used as `total_items`.
+            If you inform `total_items` and `processed_items`, then `failed_items` will be calculated as the difference.
+
 
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
         url = f'{self._server}/api/v2/task/{task_id}'
+
+        total_items, processed_items, failed_items = self._validate_items(total_items, processed_items, failed_items)
+
         data = {"finishStatus": status, "finishMessage": message,
-                "state": "FINISHED"}
+                "state": "FINISHED", "totalItems": total_items,
+                "processedItems": processed_items, "failedItems": failed_items}
+
         headers = self._headers()
         with requests.post(url, json=data, headers=headers, timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:

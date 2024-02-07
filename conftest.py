@@ -9,8 +9,11 @@ from random import randint
 from uuid import uuid4
 
 import pytest
+import dotenv
 
 from botcity.maestro import *
+
+dotenv.load_dotenv()
 
 SERVER = os.getenv("BOTCITY_SERVER")
 LOGIN = os.getenv("BOTCITY_LOGIN")
@@ -73,7 +76,7 @@ def pool(activity_label: str, maestro: BotMaestroSDK) -> DataPool:
     pool._delete()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def task(maestro: BotMaestroSDK, activity_label: str):
     parameters = {
         "test_to_test": "testing",
