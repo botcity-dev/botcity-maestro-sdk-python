@@ -410,6 +410,12 @@ class BotMaestroSDK:
     def _validate_items(total_items, processed_items, failed_items):
         if total_items == processed_items == failed_items is None:
             # If all are None, return None for all
+            msg = """
+Attention: this task is not reporting items. Please inform the total, processed and failed items.
+Reporting items is a crucial step to calculate the ROI, success rate and other metrics for your automation
+via BotCity Insights.
+            """
+            warnings.warn(msg, stacklevel=4)
             return None, None, None
         if total_items is None and processed_items is not None and failed_items is not None:
             # If total is None, but processed and failed are not, then total is the sum of both
@@ -420,6 +426,12 @@ class BotMaestroSDK:
         if total_items is not None and processed_items is None and failed_items is not None:
             # If total and failed are not None, but processed is, then processed is the difference
             processed_items = total_items - failed_items
+
+        if total_items is None or processed_items is None or failed_items is None:
+            raise ValueError(
+                "You must inform at least two of the following parameters: total_items, processed_items, failed_items."
+            )
+
         # Make sure no negative values are present
         total_items = max(0, total_items)
         processed_items = max(0, processed_items)
