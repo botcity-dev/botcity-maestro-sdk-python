@@ -59,11 +59,12 @@ def test_finish_task_to_failed(maestro: BotMaestroSDK, task: AutomationTask):
     assert task.finish_status == AutomationTaskFinishStatus.FAILED
 
 def test_finish_task_report_no_items(maestro: BotMaestroSDK, task: AutomationTask):
-    maestro.finish_task(
-        task_id=str(task.id),
-        message="Task Finished OK.",
-        status=AutomationTaskFinishStatus.SUCCESS,
-    )
+    with pytest.warns(UserWarning, match="this task is not reporting items"):
+        maestro.finish_task(
+            task_id=str(task.id),
+            message="Task Finished OK.",
+            status=AutomationTaskFinishStatus.SUCCESS,
+        )
     task = maestro.get_task(task_id=str(task.id))
     assert task.finish_status == AutomationTaskFinishStatus.SUCCESS
     assert task.total_items == 0
@@ -140,4 +141,13 @@ def test_finish_task_report_error_invalid_total_items(maestro: BotMaestroSDK, ta
             total_items=10,
             processed_items=6,
             failed_items=5
+        )
+
+def test_finish_task_report_error_invalid_params(maestro: BotMaestroSDK, task: AutomationTask):
+    with pytest.raises(ValueError):
+        maestro.finish_task(
+            task_id=str(task.id),
+            message="Task Finished with success.",
+            status=AutomationTaskFinishStatus.SUCCESS,
+            total_items=10
         )
