@@ -164,7 +164,6 @@ class AutomationTask:
     total_items: int = 0
     activity_name: str = None
 
-
     def to_json(self) -> str:
         """
 
