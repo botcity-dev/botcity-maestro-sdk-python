@@ -183,6 +183,7 @@ class BotMaestroSDK:
             maestro.access_token = token
             maestro.organization = organization
             maestro.task_id = task_id
+            maestro._define_implementation()
         else:
             maestro = cls(
                 server=default_server,
