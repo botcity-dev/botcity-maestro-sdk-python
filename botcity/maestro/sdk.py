@@ -240,11 +240,17 @@ class BotMaestroSDK:
 
     @property
     def timeout(self):
+        """The timeout for the requests"""
         return self._timeout
 
     @timeout.setter
     def timeout(self, value):
         self._timeout = value
+
+    @property
+    def is_online(self):
+        """Whether or not the object is connected to the BotCity Orchestrator portal"""
+        return self.access_token is not None and self.access_token != ""
 
     def login(self, server: Optional[str] = None, login: Optional[str] = None, key: Optional[str] = None):
         """
