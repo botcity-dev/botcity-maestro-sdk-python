@@ -39,3 +39,4 @@ def test_login_error_in_key_none(maestro_test_to_login: BotMaestroSDK):
 def test_login_success(maestro_test_to_login: BotMaestroSDK):
     maestro_test_to_login.login(server=conftest.SERVER, login=conftest.LOGIN, key=conftest.KEY)
     assert maestro_test_to_login.access_token
+    assert maestro_test_to_login.is_online
