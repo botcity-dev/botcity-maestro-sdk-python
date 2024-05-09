@@ -398,6 +398,10 @@ class BotMaestroSDK:
             priority: (Optional[int], optional) An integer from 0 to 10 to refer to execution priority.
             min_execution_date (Optional[datetime.datetime], optional): Minimum execution date for the task.
 
+        Warning:
+            The BotCity Orchestrator time zone is in UTC-0. Therefore, consider the difference between
+            time zones when using the `min_execution_date` parameter.
+
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
         """
