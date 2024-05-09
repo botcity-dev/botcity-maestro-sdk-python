@@ -397,6 +397,8 @@ class BotMaestroSDK:
             test: Whether or not the task is a test.
             priority: (Optional[int], optional) An integer from 0 to 10 to refer to execution priority.
             min_execution_date (Optional[datetime.datetime], optional): Minimum execution date for the task.
+                The BotCity Orchestrator time zone is in UTC-0. Therefore, consider the difference between
+                time zones when using this parameter.
 
         Returns:
             Automation Task. See [AutomationTask][botcity.maestro.model.AutomationTask]
