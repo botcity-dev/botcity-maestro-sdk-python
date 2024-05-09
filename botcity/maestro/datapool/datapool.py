@@ -69,7 +69,7 @@ class DataPool:
                             item_max_processing_time=values.get("itemMaxProcessingTime"),
                             max_errors_before_inactive=values.get("maxErrorsBeforeInactive"),
                             abort_on_error=values.get("abortOnError"),
-                            repository_label = values.get("repositoryLabel"), maestro=maestro,
+                            repository_label=values.get("repositoryLabel"), maestro=maestro,
                             )
         return datapool
 
