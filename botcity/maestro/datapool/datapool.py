@@ -23,6 +23,7 @@ class DataPool:
     datapool_id: str = None
     maestro: 'BotMaestroSDK' = None  # noqa: F821
     active: bool = True
+    repository_label: str = "DEFAULT"
 
     def to_dict(self):
         """
@@ -43,6 +44,7 @@ class DataPool:
             "maxErrorsBeforeInactive": self.max_errors_before_inactive,
             "itemMaxProcessingTime": self.item_max_processing_time,
             "active": self.active,
+            "repositoryLabel": self.repository_label
         }
 
     @staticmethod
@@ -66,7 +68,8 @@ class DataPool:
                             max_auto_retry=values.get('maxAutoRetry'),
                             item_max_processing_time=values.get("itemMaxProcessingTime"),
                             max_errors_before_inactive=values.get("maxErrorsBeforeInactive"),
-                            abort_on_error=values.get("abortOnError"), maestro=maestro,
+                            abort_on_error=values.get("abortOnError"),
+                            repository_label=values.get("repositoryLabel"), maestro=maestro,
                             )
         return datapool
 
@@ -93,6 +96,7 @@ class DataPool:
         self.max_errors_before_inactive = values.get("maxErrorsBeforeInactive")
         self.abort_on_error = values.get("abortOnError")
         self.active = values.get("active")
+        self.repository_label = values.get("repositoryLabel")
 
     def activate(self):
         """
