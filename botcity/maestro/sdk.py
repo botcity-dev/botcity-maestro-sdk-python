@@ -1079,19 +1079,11 @@ via BotCity Insights.
             key: Key name within the credential set
             new_value: Credential new value
         """
-        credential = self._get_credential_by_label(label=label)
-        if credential is None:
-            raise ValueError(f"Credential set '{label}' does not exists.")
+        credential = self._get_credential_by_label(label=label, raise_exception=True)
         secrets = credential.get("secrets", [])
-
-        index = next((i for i, d in enumerate(secrets) if d.get('key') == key), None)
-        if index is None:
-            raise ValueError(f"Key '{key}' does not exist in credential set '{label}'.")
-        else:
-            secrets[index]['value'] = new_value
-        response = self._edit_credential_by_label(label, secrets=secrets)
-        if response is None:
-            raise ValueError('Error during credential update.')
+        index = self._get_secrets_key_index(label=label, key=key, secrets=secrets)
+        secrets[index]['value'] = new_value
+        self._edit_credential_by_label(label, secrets=secrets)
 
     @since_version("3.0.0")
     @ensure_access_token()
@@ -1101,24 +1093,33 @@ via BotCity Insights.
             label: Credential set name
             key: Key name within the credential set
         """
-        credential = self._get_credential_by_label(label=label)
-        if credential is None:
-            raise ValueError(f"Credential set '{label}' does not exists.")
+        credential = self._get_credential_by_label(label=label, raise_exception=True)
         secrets = credential.get("secrets", [])
+        index = self._get_secrets_key_index(label=label, key=key, secrets=secrets)
+        del secrets[index]
+        self._edit_credential_by_label(label, secrets=secrets)
+
+    def _get_secrets_key_index(self, label: str, key: str, secrets: list):
+        """
+        Find and return the index of a given key in the secrets list.
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            secrets: List of secret dictionary entries
+        Returns:
+            The key index or None in case it is not found
+        """
         index = next((i for i, d in enumerate(secrets) if d.get('key') == key), None)
         if index is None:
             raise ValueError(f"Key '{key}' does not exist in credential set '{label}'.")
-        else:
-            del secrets[index]
-        response = self._edit_credential_by_label(label, secrets=secrets)
-        if response is None:
-            raise ValueError('Error during credential removal.')
+        return index
 
-    def _get_credential_by_label(self, label):
+    def _get_credential_by_label(self, label, raise_exception: bool = False):
         """
         Get dict in key inside credentials
         Args:
             label: Credential set name
+            raise_exception: Whether or not to raise exception in case the credential set is not found
         Returns:
             Credential dict
         """
@@ -1128,6 +1129,8 @@ via BotCity Insights.
             if req.ok:
                 return json.loads(model.ServerMessage.from_json(req.text).payload)
             else:
+                if raise_exception:
+                    req.raise_for_status()
                 return None
 
     def _create_credential_by_label(self, label: str, secrets: list):
@@ -1142,8 +1145,7 @@ via BotCity Insights.
         ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
-            else:
-                return None
+            req.raise_for_status()
 
     def _edit_credential_by_label(self, label: str, secrets: list):
         data = {
@@ -1157,8 +1159,7 @@ via BotCity Insights.
         ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
-            else:
-                return None
+            req.raise_for_status()
 
     @since_version("3.0.2")
     @ensure_access_token()
