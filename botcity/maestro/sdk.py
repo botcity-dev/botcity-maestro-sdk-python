@@ -1043,7 +1043,7 @@ via BotCity Insights.
     @ensure_access_token()
     def create_credential(self, label: str, key: str, value):
         """
-        Create credential
+        Create credential in a credentials set
         Args:
             label: Credential set name
             key: Key name within the credential set
@@ -1052,7 +1052,10 @@ via BotCity Insights.
         credential = self._get_credential_by_label(label=label)
 
         if credential is None:
-            response = self._create_credential_by_label(label=label, key=key, value=value)
+            secrets = [
+                {'key': key, 'value': value, 'valid': True}
+            ]
+            response = self._create_credential_by_label(label=label, secrets=secrets)
             if response is None:
                 raise ValueError('Error during create credential.')
             return response.to_json()
@@ -1067,11 +1070,56 @@ via BotCity Insights.
             if not req.ok:
                 req.raise_for_status()
 
-    def _get_credential_by_label(self, label):
+    @since_version("3.0.0")
+    @ensure_access_token()
+    def update_credential(self, label: str, key: str, new_value):
+        """Update a credential with a new value
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            new_value: Credential new value
+        """
+        credential = self._get_credential_by_label(label=label, raise_exception=True)
+        secrets = credential.get("secrets", [])
+        index = self._get_secrets_key_index(label=label, key=key, secrets=secrets)
+        secrets[index]['value'] = new_value
+        self._edit_credential_by_label(label, secrets=secrets)
+
+    @since_version("3.0.0")
+    @ensure_access_token()
+    def remove_credential(self, label: str, key: str):
+        """Removes a credential from the set
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+        """
+        credential = self._get_credential_by_label(label=label, raise_exception=True)
+        secrets = credential.get("secrets", [])
+        index = self._get_secrets_key_index(label=label, key=key, secrets=secrets)
+        del secrets[index]
+        self._edit_credential_by_label(label, secrets=secrets)
+
+    def _get_secrets_key_index(self, label: str, key: str, secrets: list):
+        """
+        Find and return the index of a given key in the secrets list.
+        Args:
+            label: Credential set name
+            key: Key name within the credential set
+            secrets: List of secret dictionary entries
+        Returns:
+            The key index or None in case it is not found
+        """
+        index = next((i for i, d in enumerate(secrets) if d.get('key') == key), None)
+        if index is None:
+            raise ValueError(f"Key '{key}' does not exist in credential set '{label}'.")
+        return index
+
+    def _get_credential_by_label(self, label, raise_exception: bool = False):
         """
         Get dict in key inside credentials
         Args:
             label: Credential set name
+            raise_exception: Whether or not to raise exception in case the credential set is not found
         Returns:
             Credential dict
         """
@@ -1079,16 +1127,16 @@ via BotCity Insights.
 
         with requests.get(url, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT) as req:
             if req.ok:
-                return model.ServerMessage.from_json(req.text)
+                return json.loads(model.ServerMessage.from_json(req.text).payload)
             else:
+                if raise_exception:
+                    req.raise_for_status()
                 return None
 
-    def _create_credential_by_label(self, label: str, key: str, value):
+    def _create_credential_by_label(self, label: str, secrets: list):
         data = {
             'label': label,
-            'secrets': [
-                {'key': key, 'value': value, 'valid': True}
-            ]
+            'secrets': secrets
         }
         url = f'{self._server}/api/v2/credential'
 
@@ -1097,8 +1145,21 @@ via BotCity Insights.
         ) as req:
             if req.ok:
                 return model.ServerMessage.from_json(req.text)
-            else:
-                return None
+            req.raise_for_status()
+
+    def _edit_credential_by_label(self, label: str, secrets: list):
+        data = {
+            'label': label,
+            'secrets': secrets
+        }
+        url = f'{self._server}/api/v2/credential/{label}'
+
+        with requests.post(
+            url, json=data, headers=self._headers(), timeout=self._timeout, verify=self.VERIFY_SSL_CERT
+        ) as req:
+            if req.ok:
+                return model.ServerMessage.from_json(req.text)
+            req.raise_for_status()
 
     @since_version("3.0.2")
     @ensure_access_token()
