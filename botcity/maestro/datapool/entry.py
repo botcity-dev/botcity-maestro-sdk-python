@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from .enums import StateEnum
+from .enums import ErrorType, StateEnum
 
 
 @dataclass
@@ -14,6 +14,12 @@ class DataPoolEntry:
     datapool_label: str = None
     state: str = None
     entry_id: str = None
+    unique_key: str = None
+    display_value: str = None
+    message: str = None
+    error_type: str = None
+    retry_index: int = 0
+    runner: str = None
     task_id: int = None
     parent: str = None
     child: str = None
@@ -44,6 +50,12 @@ class DataPoolEntry:
             "values": self.values,
             "dataPoolLabel": self.datapool_label,
             "state": self.state,
+            "uniqueKey": self.unique_key,
+            "displayValue": self.display_value,
+            "message": self.message,
+            "errorType": self.error_type,
+            "retryIndex": self.retry_index,
+            "runner": self.runner,
             "taskId": self.task_id,
             "parent": self.parent,
             "child": self.child,
@@ -62,9 +74,15 @@ class DataPoolEntry:
         """
         values = json.loads(payload)
         self.entry_id = values.get("id")
-        self.datapool_label = values.get('dataPoolLabel')
+        self.datapool_label = values.get("dataPoolLabel")
         self.state = values.get("state")
         self.values = values.get("values")
+        self.unique_key = values.get("uniqueKey")
+        self.display_value = values.get("displayValue")
+        self.message = values.get("message")
+        self.error_type = values.get("errorType")
+        self.retry_index = values.get("retryIndex")
+        self.runner = values.get("runner")
         self.task_id = values.get("taskId")
         self.priority = values.get("priority")
         self.parent = values.get("parent")
@@ -111,8 +129,8 @@ class DataPoolEntry:
             return
 
         if self.state == StateEnum.PENDING:
-            states = [StateEnum.PROCESSING]
-            if state not in [StateEnum.PROCESSING]:
+            states = [StateEnum.PROCESSING, StateEnum.CANCELED]
+            if state not in states:
                 raise ValueError(f"In state {state}, only change to states {','.join(states)} is allowed.")
 
         if self.state == StateEnum.PROCESSING:
@@ -139,22 +157,31 @@ class DataPoolEntry:
                 return self.update_from_json(req.content)
             req.raise_for_status()
 
-    def _report(self, state: str):
+    def _report(self, state: str, message: str = ""):
         self.state = state
+        self.message = message
         self.save()
 
-    def report_done(self):
+    def report_done(self, finish_message: str = "") -> None:
         """
         Report state DONE to DataPool Entry.
+
+        Args:
+            finish_message (Optional, str): A message to be associated with this action.
+
         Returns: None
-
         """
-        self._report(state=StateEnum.DONE)
+        self._report(state=StateEnum.DONE, message=finish_message)
 
-    def report_error(self):
+    def report_error(self, error_type: ErrorType = ErrorType.SYSTEM, finish_message: str = "") -> None:
         """
         Report state ERROR to DataPool Entry.
-        Returns: None
 
+        Args:
+            error_type (Optional, ErrorType): The type of error. Defaults to 'SYSTEM' error.
+            finish_message (Optional, str): A message to be associated with this action.
+
+        Returns: None
         """
-        self._report(state=StateEnum.ERROR)
+        self.error_type = error_type
+        self._report(state=StateEnum.ERROR, message=finish_message)
