@@ -126,6 +126,13 @@ class DataPool:
     @staticmethod
     def _convert_schema_fields(schema_data: list) -> List[SchemaField]:
         """
+        Converts schema fields from API response to SchemaField objects.
+
+        Args:
+            schema_data (list): List of schema field dictionaries from the API response.
+
+        Returns:
+            List[SchemaField]: List of SchemaField objects.
         """
         return [
             SchemaField(
