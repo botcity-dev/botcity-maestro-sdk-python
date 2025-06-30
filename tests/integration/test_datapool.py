@@ -1,7 +1,7 @@
 import pytest
 
 from botcity.maestro import BotMaestroSDK, DataPool, DataPoolEntry
-from botcity.maestro.datapool.enums import StateEnum
+from botcity.maestro.datapool.enums import StateEnum, ErrorType
 from conftest import DATAPOOL_LABEL
 
 
@@ -65,3 +65,44 @@ def test_next(pool: DataPool):
     assert entry.task_id == "123"
 
     entry.report_done()
+
+
+@pytest.mark.depends(name="test_next")
+def test_report_done(pool: DataPool, datapool_entry: DataPoolEntry):
+    finish_message = "Finished successfully"
+
+    pool.create_entry(entry=datapool_entry)
+    entry = pool.next(task_id=123)
+    entry.report_done(finish_message=finish_message)
+
+    finished_entry = pool.get_entry(entry_id=entry.entry_id)
+    assert finished_entry.state == StateEnum.DONE
+    assert finished_entry.message == finish_message
+
+
+@pytest.mark.depends(name="test_report_done")
+def test_report_error(pool: DataPool, datapool_entry: DataPoolEntry):
+    finish_message = "Finished with error"
+
+    pool.create_entry(entry=datapool_entry)
+    entry = pool.next(task_id=123)
+    entry.report_error(error_type=ErrorType.BUSINESS, finish_message=finish_message)
+
+    finished_entry = pool.get_entry(entry_id=entry.entry_id)
+    assert finished_entry.state == StateEnum.ERROR
+    assert finished_entry.error_type == ErrorType.BUSINESS
+    assert finished_entry.message == finish_message
+
+
+@pytest.mark.depends(name="test_report_error")
+def test_cancel_entry(pool: DataPool, datapool_entry: DataPoolEntry):
+    entry = pool.create_entry(entry=datapool_entry)
+    canceled_entry = pool.cancel_entry(entry_id=entry.entry_id)
+    assert canceled_entry.state == StateEnum.CANCELED
+
+
+@pytest.mark.depends(name="test_cancel_entry")
+def test_delete_entry(pool: DataPool, datapool_entry: DataPoolEntry):
+    entry = pool.create_entry(entry=datapool_entry)
+    pool.delete_entry(entry_id=entry.entry_id)
+    assert pool.has_next() is False
