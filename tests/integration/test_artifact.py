@@ -4,15 +4,31 @@ import os
 
 import pytest
 
-from botcity.maestro import AutomationTask, BotMaestroSDK
+from botcity.maestro import Artifact, AutomationTask, BotMaestroSDK
 
 
 def test_post_artifact(maestro: BotMaestroSDK, file: str, task: AutomationTask):
-    maestro.post_artifact(
+    artifact_name = "My Artifact.txt"
+    response = maestro.post_artifact(
         task_id=task.id,
-        artifact_name="My Artifact",
+        artifact_name=artifact_name,
         filepath=file
     )
+
+    artifact = Artifact.from_json(response.payload)
+    assert artifact.name == artifact_name
+
+
+def test_post_artifact_without_file_extension(maestro: BotMaestroSDK, file: str, task: AutomationTask):
+    artifact_name = "My Artifact"
+    response = maestro.post_artifact(
+        task_id=task.id,
+        artifact_name=artifact_name,
+        filepath=file
+    )
+
+    artifact = Artifact.from_json(response.payload)
+    assert artifact.name == f"{artifact_name}.txt"
 
 
 @pytest.mark.depends(name="test_post_artifact")
