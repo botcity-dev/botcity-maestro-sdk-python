@@ -744,6 +744,19 @@ via BotCity Insights.
         Returns:
             Server response message. See [ServerMessage][botcity.maestro.model.ServerMessage]
         """
+        file = Path(filepath)
+
+        if not file.exists():
+            raise FileNotFoundError(f"No such file: {filepath}")
+
+        if not file.is_file():
+            raise ValueError("Invalid file type. Please make sure you are using a valid file path "
+                             "and not pointing to a directory.")
+
+        file_extension = file.suffix
+        if not artifact_name.endswith(file_extension):
+            artifact_name = f"{artifact_name}{file_extension}"
+
         artifact_id = self._create_artifact(task_id=task_id, name=artifact_name, filename=artifact_name)
         url = f'{self._server}/api/v2/artifact/log/{json.loads(artifact_id.payload)["id"]}'
 
