@@ -1176,7 +1176,7 @@ via BotCity Insights.
 
     @since_version("3.0.2")
     @ensure_access_token()
-    def create_datapool(self, pool) -> DataPool:
+    def create_datapool(self, pool: DataPool) -> DataPool:
         """
         Create a new datapool on the BotMaestro portal.
 

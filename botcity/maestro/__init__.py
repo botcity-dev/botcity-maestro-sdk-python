@@ -1,6 +1,8 @@
 from botcity.maestro._version import get_versions
 
 from .datapool import DataPool, DataPoolEntry  # noqa: F401, F403
+from .datapool.datapool import SchemaField  # noqa: F401, F403
+from .datapool.enums import ErrorType, FieldType  # noqa: F401, F403
 from .model import *  # noqa: F401, F403
 from .sdk import BotMaestroSDK  # noqa: F401, F403
 
