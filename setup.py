@@ -12,6 +12,7 @@ setup(
     name='botcity-maestro-sdk',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
+    license='Apache-2.0',
     packages=find_namespace_packages(include=['botcity.*']),
     url='https://www.github.com/botcity-dev/botcity-maestro-sdk-python',
     long_description=open('README.md', 'r', encoding='utf-8').read(),
